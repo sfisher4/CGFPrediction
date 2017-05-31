@@ -2,7 +2,7 @@ from Bio.Blast.Applications import NcbiblastnCommandline
 from Bio.Blast import NCBIXML
 from Bio import SeqIO
 
-HSP_THRESHOLD = 0.99 #99% identity
+HSP_THRESHOLD = 1.0 #99% identity
 
 #create a blastn query and output into an xml file
 def blastn_query(query_genes, database, out_file):
@@ -30,7 +30,7 @@ def create_hsp_records(blast_records, amplicons):
             #very naive... don't continue to parse once you found the primer
             for amplicon in SeqIO.parse(amplicons, "fasta"):
                 if alignment.title.find(amplicon.name) != -1:
-                    lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / len(amplicon.seq))]
+                    lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD == (hsp.identities / len(amplicon.seq))]
                     if (len(lo_hsp) != 0): #lo_hsp is not empty
                         dict_hsp[alignment] = lo_hsp
                     break

@@ -1,25 +1,27 @@
 
-E_VALUE_THRESHOLD = 0.04 #TODO: determine an e-value threshold
-HSP_THRESHOLD = 1
+class HSP(object):
 
-class Query(object):
-
-    """A Query object that has the following attributes:
-        name: The name of the query sequence (ran on blastn)
-        start: The start element of the query in the db
-        end: The end element of the query in the db
-        strand: True if primer located on leading strand (+, template) and false if primer located on lagging strand (-, complement)
+    """A High Sequence Pair object found from running Blastn that has the following attributes:
+        name: The name of the hsp (ran on blastn) based off of the query name
+        start: The start element of the hsp in the db
+        end: The end element of the hsp in the db
+        strand: True if hsp located on leading strand (+, template) and false if hsp located on lagging strand (-, complement)
+        length: length of the hsp
+        valid: True if the the leading and lagging strand is opposite (hsp is opposite to the other hsp on the same gene)
+        db_length: the length of the db that the high sequence pair is located on 
+        blast_record_title: Title of the blast record that the hsp was retrieved from.
     """
 
     def __init__(self, name):
-        self.name = name
+        self.name = name #The name of the hsp... including which node (contig) located on
+        self.expect = -1
         self.start = -1 #not possible to have a start or end that starts at -1
         self.end = -1   #not possible to have a start or end that starts at -1
         self.strand = None #assert strand is not None
         self.length = 0
         self.valid = None
         self.db_length = 0
-        self.blast_record_title = ""
+        self.contig_name = "" #ACTUALLY PUT THE CONTIG THE HSP IS ON!
 
 
 
