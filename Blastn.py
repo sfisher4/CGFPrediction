@@ -14,12 +14,11 @@ class Blastn(object):
         hsp_records: A list of hsp records that contain the blast_records that meet threshold value length
     """
 
-    def __init__(self, name):
-        """Return a Blastn object whose query name is , results from blastn is 
-        blast_records and hsp results is hsp_records"""
+    def __init__(self):
+        """Return a Blastn object with the following attributes from a blastn query:
+        - blast records
+        - hsp records """
 
-        # self.name_query = name_query
-        self.name = name
         self.blast_records = []
         self.hsp_records = {}
 
@@ -29,28 +28,40 @@ class Blastn(object):
             self.blast_records = list(blast_records)
             result_handle.close()
 
-#TODO: combine create_hsp_records and create_hsp_records_full_gene_search into one function
-    def create_hsp_records(self, genes): #genes is a list of primers when called by pcrdirectly and the db when called by entire_gene
+    # genes is a list of primers when called by pcr directly and the db when called by entire_gene
+    #TODO: merge with create_hsp_records_entire_gene
+    def create_hsp_records(self, genes):
         dict_hsp = {}
-        lo_hsp = []
-
+        # lo_hsp = []
+        full_lo_hsp = []
+        # print('br', self.blast_records)
         for blast_record in self.blast_records:
-            for alignment in blast_record.alignments:
-                for gene in SeqIO.parse(genes, "fasta"):
-                    if alignment.title.find(gene.name) != -1:   #ensures the hsp alignment is on the right gene
-                                # print('name', self.name)
-                                # print(hsp.identities / len(gene.seq))
-                                # print('hsp identities', hsp.identities)
-                                # print('gene length', len(gene.seq))
+            for gene in SeqIO.parse(genes, "fasta"):
+                if blast_record.query in gene.name:
+                    for alignment in blast_record.alignments:
                         lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / len(gene.seq))] #TODO: consider gene 1324 and 1134
-                    if (len(lo_hsp) != 0):  # lo_hsp is not empty #TODO: correct indentation?
-                        # print('ratio', hsp.identities / len(gene.seq))
-                        # print('title', alignment.title)
-                        dict_hsp[alignment] = lo_hsp
-                        #break  # don't need to go through all gene seq'n in primers once the right alignment is found.
+                        if (len(lo_hsp) != 0):  # lo_hsp is not empty #TODO: correct indentation?
+                            dict_hsp[alignment] = lo_hsp
+                            full_lo_hsp.append(lo_hsp)
+                            #break  # don't need to go through all gene seq'n in primers once the right alignment is found.
         self.hsp_records = dict_hsp
 
-
-
-
-
+    # genes is a list of primers when called by pcr directly and the db when called by entire_gene
+    def create_hsp_records_entire_gene(self, genes):
+        dict_hsp = {}
+        # lo_hsp = []
+        full_lo_hsp = []
+        # print('br', self.blast_records)
+        for blast_record in self.blast_records:
+            for gene in SeqIO.parse(genes, "fasta"):
+                if blast_record.query in gene.name:
+                    for alignment in blast_record.alignments:
+                        # if 'NODE' in alignment.hit_def: #todo: change condition
+                        lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / alignment.length)] #TODO: consider gene 1324 and 1134 #divide by the length of the contig
+                        # else:
+                        #     lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / len(gene.seq))]
+                        if (len(lo_hsp) != 0):  # lo_hsp is not empty #TODO: correct indentation?
+                            dict_hsp[alignment] = lo_hsp
+                            full_lo_hsp.append(lo_hsp)
+                            #break  # don't need to go through all gene seq'n in primers once the right alignment is found.
+        self.hsp_records = dict_hsp
