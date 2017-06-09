@@ -2,7 +2,7 @@ from Bio.Blast import NCBIXML
 from Bio import SeqIO
 
 E_VALUE_THRESHOLD = 0.04 #TODO: determine an e-value threshold
-HSP_THRESHOLD = 0.9
+HSP_THRESHOLD = 0.9 #todo: determine a HSP_THRESHOLD
 
 class Blastn(object):
     """ A blastn query from comparing two nucleotide sequences. Blastn have the following properites:
@@ -39,8 +39,22 @@ class Blastn(object):
             for gene in SeqIO.parse(genes, "fasta"):
                 if blast_record.query in gene.name:
                     for alignment in blast_record.alignments:
+                        # for hsp in alignment.hsps:
+                        #     print('sbjct', hsp.sbjct)
+                        #     print('query', hsp.query)
+                        #     print('start', hsp.sbjct_start)
+                        #     print('end', hsp.sbjct_end)
+                        #     print('start!', hsp.query_start)
+                        #     print('end!', hsp.query_end)
+                        #     for match in hsp.match:
+                        #         if match == "|":
+                        #             print('!!!')
+                        #         else:
+                        #             print(match)
+                        #     for subject in hsp.sbjct:
+                        #         print(subject)
                         lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / len(gene.seq))] #TODO: consider gene 1324 and 1134
-                        if (len(lo_hsp) != 0):  # lo_hsp is not empty #TODO: correct indentation?
+                        if (len(lo_hsp) != 0):  # lo_hsp is not empty
                             dict_hsp[alignment] = lo_hsp
                             full_lo_hsp.append(lo_hsp)
                             #break  # don't need to go through all gene seq'n in primers once the right alignment is found.
@@ -57,7 +71,7 @@ class Blastn(object):
                 if blast_record.query in gene.name:
                     for alignment in blast_record.alignments:
                         # if 'NODE' in alignment.hit_def: #todo: change condition
-                        lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / alignment.length)] #TODO: consider gene 1324 and 1134 #divide by the length of the contig
+                        lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / alignment.length)] #divide by the length of the contig
                         # else:
                         #     lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / len(gene.seq))]
                         if (len(lo_hsp) != 0):  # lo_hsp is not empty #TODO: correct indentation?

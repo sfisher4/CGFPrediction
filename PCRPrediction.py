@@ -6,8 +6,9 @@ from HSP import HSP
 
 E_VALUE_THRESHOLD = 0.04 #TODO: determine an e-value threshold
 MAX_DIST_BTW_CONTIGS = 600
-MAX_DIST_BTWN_PRIMERS = 50
+MAX_DIST_BTWN_PRIMERS = 50 #if there is 50 missing, it will work
 CUTOFF_GENE_LENGTH = 60
+SNP_THRESHOLD = 5 #5 bp must be an exact match with 3' end of primer
 
 #create a blastn query and output into an xml file
 def blastn_query(query_genes, database, out_file):
@@ -52,6 +53,8 @@ def create_hsp_objects(blastn_object):
                         hsp_object = HSP(hsp_name)  #creates a HSP object
                         hsp_object.start = hsp.sbjct_start
                         hsp_object.end = hsp.sbjct_end
+                        hsp_object.query_start = hsp.query_start
+                        hsp_object.query_end = hsp.query_end
                         hsp_object.contig_name = alignment.hit_def
 
                         # assuming no contigs (complete genome)
@@ -64,6 +67,8 @@ def create_hsp_objects(blastn_object):
                         hsp_object.length = abs(hsp_object.end - hsp_object.start) + 1
                         hsp_object.db_length = alignment.length
                         hsp_object.expect = hsp.expect
+                        hsp_object.sbjct = hsp.sbjct
+                        hsp_object.query = hsp.query
 
                         hsp_objects.append(hsp_object)
     return hsp_objects
@@ -86,6 +91,32 @@ def valid_strands(first_hsp_object, second_hsp_object, lo_forward_hsp_objects, l
             lo_forward_hsp_objects.remove(first_hsp_object)
             lo_reverse_hsp_objects.remove(second_hsp_object)
 
+# todo: faster way?
+def create_primer_dict(primers):
+    primer_dict = {}
+    for primer in SeqIO.parse(primers, "fasta"):
+        primer_dict[primer.id] = primer.seq
+        # print('pid', primer.id)
+    return primer_dict
+
+#Returns True if there is a mismatch in the first SNP_THRESHOLD base pairs and False otherwise
+#f_primers and r_primers are dictionaries containing the primer sequences that was used as the query for blastn search.
+#TODO: only considers if the primers are on the same contig!
+#TODO: If this is the way that the program should function, then change this function s.t. the hsp objects have a forward and reverse primer attribute
+#TODO: and... make less naive!
+#TODO: make sure hsp_object.name is correct!!!
+def is_snp(hsp_object, f_primers, r_primers):
+    f_primer_end = f_primers[hsp_object.name]
+    r_primer_end = r_primers[hsp_object.name]
+    # print('primer', f_primer_end[len(f_primer_end) - SNP_THRESHOLD: len(f_primer_end)])
+    # print('query', hsp_object.sbjct[len(hsp_object.sbjct) - SNP_THRESHOLD: len(hsp_object.sbjct)])
+    # print(f_primer_end)
+    if str(f_primer_end[len(f_primer_end) - SNP_THRESHOLD: len(f_primer_end)]) in hsp_object.sbjct[len(hsp_object.sbjct) - SNP_THRESHOLD: len(hsp_object.sbjct)]:
+        hsp_object.snp = False #Not 3' SNP
+    elif str(r_primer_end[len(r_primer_end) - SNP_THRESHOLD: len(r_primer_end)]) in hsp_object.sbjct[len(hsp_object.sbjct) - SNP_THRESHOLD: len(hsp_object.sbjct)]:
+        hsp_object.snp = False
+    else:
+        hsp_object.snp = True #3' SNP
 
 # Returns true if forward_hsp and reverse_hsp have correct distance from each other, compared to the amplicon_sequences (includes primer strand length)
 # and False otherwise.
@@ -111,7 +142,8 @@ def is_correct_distance(amplicon_sequences, f_hsp_object, q_distance):
 #TODO: possibly change this fcn... too similar to find_distances.
 def pcr_directly(forward_hsp_object, reverse_hsp_object, database, amplicon_sequences, lo_forward_hsp_objects, lo_reverse_hsp_objects):
     valid_strands(forward_hsp_object, reverse_hsp_object, lo_forward_hsp_objects, lo_reverse_hsp_objects)
-    if forward_hsp_object.valid == True: #foward and reverse hsp objects have the same valid value
+    #TODO: possibly remove this condition... and return a flag if there is a snp on the 3' end
+    if forward_hsp_object.valid == True: #and forward_hsp_object.snp == False: #foward and reverse hsp objects have the same valid value
         return is_distance(forward_hsp_object, reverse_hsp_object, amplicon_sequences, database)
     else:
         return False
@@ -173,9 +205,8 @@ def entire_gene(lo_hsp_objects, reference_object):
     #         lo_hsp_objects.pop(0)
     #return lo_queries
 
-
 #Returns a list of hsp's that would be predicted as hsp's in vitro...
-#TODO: Change return value. (hash?)
+#TODO: Change return value to hash?
 def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file):
 
     forward_blast = create_blastn_object(forward_primers, database, forward_out_file)  # using amplicon_seq for testing purposes #expect 40 blast records and 1 hsp record
@@ -184,12 +215,11 @@ def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file,
 
     lo_forward_hsp_objects = create_hsp_objects(forward_blast)
     lo_reverse_hsp_objects = create_hsp_objects(reverse_blast)
-
     lo_hsp_objects = create_hsp_objects(blast_object)
 
     lo_queries = []
 
-    #TODO: determine how much primer seq is required for it to be found (missing 5' end)
+    #TODO: make less naive
     for f_hsp_object in lo_forward_hsp_objects:
         for r_hsp_object in lo_reverse_hsp_objects:
             if f_hsp_object.name == r_hsp_object.name: #if the f_hsp and r_hsp are from the same primer query
@@ -207,34 +237,38 @@ def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file,
 def main():
 
     database = "/home/sfisher/Documents/example_genomes/complete/IA3902.fasta" #contains id and a complete genome sequence
-    forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #contains primer id's and primer sequences
-    reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #contains primer id's and primer sequences
+    forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
+    reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
     forward_out_file = "/home/sfisher/Sequences/blast_record/forward_primers_blast.xml" #location where the blast record from comparing the forward primers to the db should go
     reverse_out_file = "/home/sfisher/Sequences/blast_record/reverse_primers_blast.xml" #location where the blast record from comparing the reverse primers to the db should go
     full_out_file = "/home/sfisher/Sequences/blast_record/full_blast.xml"
 
+    #Test amp seq
     cj0008_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0008.fasta" #complete
     cj0483_contig_trunc_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_truncation.fasta"
     cj0483_complete_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_complete1.fasta" #complete
     cj0483_contig_full_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_full.fasta"
+    cj1134_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj1134.fasta"
+    cj1324_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj1324.fasta"
 
    # cj0483_contig_full_amp_seq_dir = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_full_db" #contigs (no missing contigs inbetween)
     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
 
+    #test data
     test_contig_51_bp_removed = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_db/cj0483_51_middle_bp_removed.fasta"
     test_mystery_db_name_same_contig = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/mystery_db.fasta"
     test_one_contig = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/cj0483_primer_same_contig_with_2_contigs.fasta"
     test_mystery_db_name_entire_gene = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/mystery_db_entire_gene_61_bp_each_contig.fasta"
+    cj0008_rm_2_ws = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0008_rm_2_ws.fasta"
 
     # using an amplicon_sequence as database for testing purposes
     #takes in forward_primers and reverse_primers (queries), database (contigs or complete) [only one database!!!], full amplicon sequences that contain the forward and reverse primers inputted,
     # a forward and reverse out file where the blast results can go, a complete amplicon
-    return(pcr_prediction(forward_primers, reverse_primers, test_mystery_db_name_entire_gene, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file)) #TODO: using amplicon sequence as db for testing purposes
+    return(pcr_prediction(forward_primers, reverse_primers, cj0483_contig_trunc_amp_seq, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file))
 
 
 if __name__ == "__main__": main()
 
-#TODO: Consider primer cj1134 (actually from gene cj1324)
 #TODO: Is it worth having Blastn as a class? (thought for later)
 #TODO: Put functions into HSP that might be useful (thought for later)
 #TODO: Is createObjects in the right spot?

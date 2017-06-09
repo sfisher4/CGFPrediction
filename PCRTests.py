@@ -196,6 +196,104 @@ class TestPrimer(unittest.TestCase):
                     distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, amplicon_sequences, cj0483_complete_amp_seq)
                     self.assertTrue(distance)
 
+class TestSNP(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        #test queries
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+
+        #test databases
+        cj0483_snp_1 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp/cj0483_snp_1.fasta"
+        cj0483_snp_5_fw = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp/cj0483_snp_5_fw.fasta"
+        cj0483_snp_5 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp/cj0483_snp_5.fasta"
+        cj0483_snp_6 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp/cj0483_snp_6.fasta"
+
+        #primer dictionary
+        cls._forward_primer_dict = PCRPrediction.create_primer_dict(forward_primers)
+        cls._reverse_primer_dict = PCRPrediction.create_primer_dict(reverse_primers)
+
+        #snp_1
+        forward_out_file_snp_1 = "/home/sfisher/Sequences/blast_record/forward_test_snp_1.xml"
+        reverse_out_file_snp_1 = "/home/sfisher/Sequences/blast_record/reverse_test_snp_1.xml"
+        cls._forward_blast_object_snp_1 = PCRPrediction.create_blastn_object(forward_primers, cj0483_snp_1, forward_out_file_snp_1)
+        cls._reverse_blast_object_snp_1 = PCRPrediction.create_blastn_object(reverse_primers, cj0483_snp_1, reverse_out_file_snp_1)
+        cls._lo_forward_hsp_objects_snp_1 = PCRPrediction.create_hsp_objects(cls._forward_blast_object_snp_1)
+        cls._lo_reverse_hsp_objects_snp_1 = PCRPrediction.create_hsp_objects(cls._reverse_blast_object_snp_1)
+
+        #snp_5
+        forward_out_file_snp_5 = "/home/sfisher/Sequences/blast_record/forward_test_snp_5.xml"
+        reverse_out_file_snp_5 = "/home/sfisher/Sequences/blast_record/reverse_test_snp_5.xml"
+        cls._forward_blast_object_snp_5 = PCRPrediction.create_blastn_object(forward_primers, cj0483_snp_5, forward_out_file_snp_5)
+        cls._reverse_blast_object_snp_5 = PCRPrediction.create_blastn_object(reverse_primers, cj0483_snp_5, reverse_out_file_snp_5)
+        cls._lo_forward_hsp_objects_snp_5 = PCRPrediction.create_hsp_objects(cls._forward_blast_object_snp_5)
+        cls._lo_reverse_hsp_objects_snp_5 = PCRPrediction.create_hsp_objects(cls._reverse_blast_object_snp_5)
+
+        #snp_5_fw (only removed bp 5 from the forward primer)
+        forward_out_file_snp_5_fw = "/home/sfisher/Sequences/blast_record/forward_test_snp_5_fw.xml"
+        reverse_out_file_snp_5_fw = "/home/sfisher/Sequences/blast_record/reverse_test_snp_5_fw.xml"
+        cls._forward_blast_object_snp_5_fw = PCRPrediction.create_blastn_object(forward_primers, cj0483_snp_5_fw, forward_out_file_snp_5_fw)
+        cls._reverse_blast_object_snp_5_fw = PCRPrediction.create_blastn_object(reverse_primers, cj0483_snp_5_fw, reverse_out_file_snp_5_fw)
+        cls._lo_forward_hsp_objects_snp_5_fw = PCRPrediction.create_hsp_objects(cls._forward_blast_object_snp_5_fw)
+        cls._lo_reverse_hsp_objects_snp_5_fw = PCRPrediction.create_hsp_objects(cls._reverse_blast_object_snp_5_fw)
+
+        #snp_6
+        forward_out_file_snp_6 = "/home/sfisher/Sequences/blast_record/forward_test_snp_6.xml"
+        reverse_out_file_snp_6 = "/home/sfisher/Sequences/blast_record/reverse_test_snp_6.xml"
+        cls._forward_blast_object_snp_6 = PCRPrediction.create_blastn_object(forward_primers, cj0483_snp_6, forward_out_file_snp_6)
+        cls._reverse_blast_object_snp_6 = PCRPrediction.create_blastn_object(reverse_primers, cj0483_snp_6, reverse_out_file_snp_6)
+        cls._lo_forward_hsp_objects_snp_6 = PCRPrediction.create_hsp_objects(cls._forward_blast_object_snp_6)
+        cls._lo_reverse_hsp_objects_snp_6 = PCRPrediction.create_hsp_objects(cls._reverse_blast_object_snp_6)
+
+    def test_snp_1(self):
+        for hsp in self._lo_forward_hsp_objects_snp_1:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertTrue(hsp.snp)
+        for hsp in self._lo_reverse_hsp_objects_snp_1:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertTrue(hsp.snp)
+
+    def test_snp_5(self):
+        for hsp in self._lo_forward_hsp_objects_snp_5:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertTrue(hsp.snp)
+        for hsp in self._lo_reverse_hsp_objects_snp_5:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertTrue(hsp.snp)
+
+    def test_snp_6(self):
+        for hsp in self._lo_forward_hsp_objects_snp_6:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertFalse(hsp.snp)
+        for hsp in self._lo_reverse_hsp_objects_snp_6:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertFalse(hsp.snp)
+
+    def test_snp_5_fw(self):
+        for hsp in self._lo_forward_hsp_objects_snp_5_fw:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertTrue(hsp.snp)
+        for hsp in self._lo_reverse_hsp_objects_snp_5_fw:
+            PCRPrediction.is_snp(hsp, self._forward_primer_dict, self._reverse_primer_dict)
+            self.assertFalse(hsp.snp)
+
+    def test_pcr_prediction_snp_5_fw(self):
+        cj0483_snp_1 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp/cj0483_snp_1.fasta"
+        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+        forward_out_file = '/home/sfisher/Sequences/blast_record/forward_blast.xml'
+        reverse_out_file = '/home/sfisher/Sequences/blast_record/reverse_blast.xml'
+        full_out_file = '/home/sfisher/Sequences/blast_record/full_out.xml'
+
+        prediction = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, cj0483_snp_1, forward_out_file,reverse_out_file, amplicon_sequences, full_out_file)
+
+        #Would normally produce True if it was the case that
+        self.assertEqual(prediction, [])
+
+
+
 class TestEntireGene(unittest.TestCase):
 
     @classmethod
@@ -275,6 +373,15 @@ class TestEntireGene(unittest.TestCase):
                         self.assertTrue(HSP_THRESHOLD <= (hsp.identities / 612)) #the length of gene seq in this case is 612 (cj0483_complete_amp_seq)
                     self.assertIsInstance(self._blast_object_complete.hsp_records, dict)
 
+    # # complete amp, random bp removed < % identities, pass when HSP_THRESHOLD >= 0.9
+    # # 306 bp on each contig,
+    # def test_create_hsp_records_low_perc_identities(self):
+    #
+    #
+    # #complete amp, random bp removed > % identities
+    # #306 on both strands, with
+    # def test_create_hsp_records_high_perc_identities(self):
+
     # contigs trunc
     # full gene search
     def test_create_hsp_records_full_search_contigs(self):
@@ -298,8 +405,6 @@ class TestEntireGene(unittest.TestCase):
     #contigs trunc (61 each contig)
     #full gene search
     def test_create_hsp_records_full_search_contigs_mystery(self):
-
-
         self.assertGreaterEqual(len(self._blast_obj_61_mystery.hsp_records), 1)
         self.assertGreaterEqual(len(self._blast_obj_61_mystery.hsp_records), 2)
 
@@ -564,6 +669,7 @@ class TestPCRDirectly(unittest.TestCase):
 
 class TestPCRPrediction(unittest.TestCase):
 
+    #complete genome with 100% identity, valid strands and both primers found
     def test_pcr_prediction_complete_primers(self):
         complete = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/cj0483_complete.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
@@ -581,6 +687,54 @@ class TestPCRPrediction(unittest.TestCase):
                 self.assertTrue(query.name == 'cj0483')
                 self.assertIn('cj0483', query.contig_name)
 
+    #complete genome with 50bp removed from middle, 100% identity, valid strands and both primers found
+    #Should pass if MAX_DIST_BTWN_PRIMERS <= 50
+    def test_pcr_prediction_complete_primers_max_distance(self):
+        bp_missing_btwn_primers = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/complete_sh0002_cj0483_50bp_missing.fasta"
+        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+        forward_out_file = '/home/sfisher/Sequences/blast_record/forward_blast.xml'
+        reverse_out_file = '/home/sfisher/Sequences/blast_record/reverse_blast.xml'
+        full_out_file = '/home/sfisher/Sequences/blast_record/full_out.xml'
+
+        lo_queries = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, bp_missing_btwn_primers, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file)
+        self.assertTrue(len(lo_queries) == 1)
+        for queries in lo_queries:
+            self.assertTrue(len(queries) == 2)
+            self.assertEqual(queries[0].contig_name, queries[1].contig_name)
+            for query in queries:
+                self.assertEqual(query.name, 'cj0483')
+
+    #complete genome with 51bp removed from middle, 100% identity, valid strands and both primers found
+    #Should pass if MAX_DIST_BTWN_PRIMERS <= 50
+    def test_pcr_prediction_complete_primers_short(self):
+        bp_missing_btwn_primers = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/complete_sh0002_cj0483_51bp_removed.fasta"
+        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+        forward_out_file = '/home/sfisher/Sequences/blast_record/forward_blast.xml'
+        reverse_out_file = '/home/sfisher/Sequences/blast_record/reverse_blast.xml'
+        full_out_file = '/home/sfisher/Sequences/blast_record/full_out.xml'
+
+        lo_queries = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, bp_missing_btwn_primers, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file)
+        self.assertTrue(len(lo_queries) == 0)
+
+    #compelte genome with 50bp removed from middle, 100% identity, invalid strands and both primers found
+    #Should pass if MAX_DIST_BTWN_PRIMERS <= 50
+    def test_pcr_prediction_complete_primers_invalid_strands(self):
+        invalid_db = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/invalid_complete_sh0002_cj0483_50_bp.fasta"
+        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+        forward_out_file = '/home/sfisher/Sequences/blast_record/forward_blast.xml'
+        reverse_out_file = '/home/sfisher/Sequences/blast_record/reverse_blast.xml'
+        full_out_file = '/home/sfisher/Sequences/blast_record/full_out.xml'
+
+        lo_queries = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, invalid_db, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file)
+        self.assertTrue(len(lo_queries) == 0)
+
+    #2 contigs with 100% identity on one contig (both primers on NODE_1)
     def test_pcr_prediction_one_contigs(self):
         one_contig = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/cj0483_primer_same_contig_with_2_contigs.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
@@ -598,6 +752,7 @@ class TestPCRPrediction(unittest.TestCase):
             for query in queries:
                 self.assertEqual(query.name, 'cj0483')
 
+    #2 contigs wtih 100% identity on one contig (both primers on NODE_1) and an unknown name (sh0000) for db seq.
     def test_pcr_prediction_db_name_different(self):
         db_name_mystery = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/mystery_db.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
@@ -616,7 +771,7 @@ class TestPCRPrediction(unittest.TestCase):
                 self.assertEqual(query.name, 'cj0483')
                 self.assertIn('sh0000', query.contig_name)
 
-
+    #2 contigs with 60bp, primer on different contigs, 100% identity. When CUTOFF_GENE_LENGTH >= 60, this should pass
     def test_pcr_prediction_two_60bp_contigs(self):
         both_contigs_60_bp = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/cj0483_both_contigs_60_bp.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
@@ -629,6 +784,7 @@ class TestPCRPrediction(unittest.TestCase):
         lo_queries = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, both_contigs_60_bp, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file)
         self.assertTrue(len(lo_queries) <= 0)
 
+    #2 contigs with 61bp, 100% identity. When CUTOFF_GENE_LENGTH < 61, this should pass
     def test_pcr_prediction_two_61bp_contigs(self):
         both_contigs_61_bp = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/cj0483_both_contigs_61_bp.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
@@ -645,6 +801,20 @@ class TestPCRPrediction(unittest.TestCase):
             self.assertNotEqual(queries[0].contig_name, queries[1].contig_name)
             for query in queries:
                 self.assertIn('cj0483', query.name)
+
+    # 2 contigs with 61bp, invalid strands, 100% identity, primers found on different contigs
+    # When CUTOFF_GENE_LENGTH < 61 this should pass
+    def test_pcr_prediction_two_contigs_invalid_strands(self):
+        invalid_strands = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/draft_invalid_sh0002_cj0483_61_bp.fasta"
+        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+        forward_out_file = '/home/sfisher/Sequences/blast_record/forward_blast.xml'
+        reverse_out_file = '/home/sfisher/Sequences/blast_record/reverse_blast.xml'
+        full_out_file = '/home/sfisher/Sequences/blast_record/full_out.xml'
+
+        lo_queries = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, invalid_strands, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file)
+        self.assertTrue(len(lo_queries) <= 0)
 
     #Each contig has 61 bp with a different name of db compared to amp seq
     #should produce same result as test_pcr_prediction_two_61bp_contigs
@@ -666,6 +836,183 @@ class TestPCRPrediction(unittest.TestCase):
             for query in queries:
                 self.assertIn('cj0483', query.name)
 
+class TestBPRemoved(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls._amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+
+        # 2bp removed from each primer; cj0008; Will not be affected by word size limit of 4
+        forward_out_file_cj0008_rm_2 = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0008_rm_2.xml"
+        reverse_out_file_cj0008_rm_2 = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0008_rm_2.xml"
+        cj0008_rm_2 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0008_rm_2.fasta"
+        cls._forward_blast_object_cj0008_rm_2 = PCRPrediction.create_blastn_object(forward_primers, cj0008_rm_2, forward_out_file_cj0008_rm_2)
+        cls._reverse_blast_object_cj0008_rm_2 = PCRPrediction.create_blastn_object(reverse_primers, cj0008_rm_2, reverse_out_file_cj0008_rm_2)
+
+        #2bp mismatched from each primer; cj0008; Will not be affected by word size limit of 4
+        forward_out_file_cj0008_mm_2 = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0008_mm_2.xml"
+        reverse_out_file_cj0008_mm_2 = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0008_mm_2.xml"
+        cj0008_mm_2 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0008_mm_2.fasta"
+        cls._forward_blast_object_cj0008_mm_2 = PCRPrediction.create_blastn_object(forward_primers, cj0008_mm_2, forward_out_file_cj0008_mm_2)
+        cls._reverse_blast_object_cj0008_mm_2 = PCRPrediction.create_blastn_object(reverse_primers, cj0008_mm_2, reverse_out_file_cj0008_mm_2)
+
+        #2bp removed from each primer; cj0008; Will be affected by word size limit of 4
+        forward_out_file_cj0008_rm_2_ws = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0008_rm_2_ws.xml"
+        reverse_out_file_cj0008_rm_2_ws = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0008_rm_2_ws.xml"
+        cj0008_rm_2_ws = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0008_rm_2_ws.fasta"
+        cls._forward_blast_object_cj0008_rm_2_ws = PCRPrediction.create_blastn_object(forward_primers, cj0008_rm_2_ws, forward_out_file_cj0008_rm_2_ws)
+        cls._reverse_blast_object_cj0008_rm_2_ws = PCRPrediction.create_blastn_object(reverse_primers, cj0008_rm_2_ws, reverse_out_file_cj0008_rm_2_ws)
+
+        #2bp mismatched from each primer; cj0008; Will be affected by word size limit of 4
+        forward_out_file_cj0008_mm_2_ws = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0008_mm_2_ws.xml"
+        reverse_out_file_cj0008_mm_2_ws = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0008_mm_2_ws.xml"
+        cj0008_mm_2_ws = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0008_mm_2.fasta"
+        cls._forward_blast_object_cj0008_mm_ws = PCRPrediction.create_blastn_object(forward_primers, cj0008_mm_2_ws, forward_out_file_cj0008_mm_2_ws)
+        cls._reverse_blast_object_cj0008_mm_ws = PCRPrediction.create_blastn_object(reverse_primers, cj0008_mm_2_ws, reverse_out_file_cj0008_mm_2_ws)
+
+        # 1bp removed from each primer; cj0483; Will not be affected by word size limit of 4
+        forward_out_file_cj0483_rm_1 = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0483_rm_1.xml"
+        reverse_out_file_cj0483_rm_1 = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0483_rm_1.xml"
+        cj0483_rm_1 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0483_rm_1.fasta"
+        cls._forward_blast_object_cj0483_rm_1 = PCRPrediction.create_blastn_object(forward_primers, cj0483_rm_1, forward_out_file_cj0483_rm_1)
+        cls._reverse_blast_object_cj0483_rm_1 = PCRPrediction.create_blastn_object(reverse_primers, cj0483_rm_1, reverse_out_file_cj0483_rm_1)
+
+        #1bp mismatched from each primer; cj0483; Will not be affected by word size limit of 4
+        forward_out_file_cj0483_mm_1 = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0483_mm_1.xml"
+        reverse_out_file_cj0483_mm_1 = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0483_mm_1.xml"
+        cj0483_mm_1 = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0483_mm_1.fasta"
+        cls._forward_blast_object_cj0483_mm_1 = PCRPrediction.create_blastn_object(forward_primers, cj0483_mm_1, forward_out_file_cj0483_mm_1)
+        cls._reverse_blast_object_cj0483_mm_1 = PCRPrediction.create_blastn_object(reverse_primers, cj0483_mm_1, reverse_out_file_cj0483_mm_1)
+
+        #1bp removed from each primer; cj0483; Will be affected by word size limit of 4
+        forward_out_file_cj0483_rm_1_ws = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0483_rm_1_ws.xml"
+        reverse_out_file_cj0483_rm_1_ws = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0483_rm_1_ws.xml"
+        cj0483_rm_1_ws = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0483_rm_1_ws.fasta"
+        cls._forward_blast_object_cj0483_rm_1_ws = PCRPrediction.create_blastn_object(forward_primers, cj0483_rm_1_ws, forward_out_file_cj0483_rm_1_ws)
+        cls._reverse_blast_object_cj0483_rm_1_ws = PCRPrediction.create_blastn_object(reverse_primers, cj0483_rm_1_ws, reverse_out_file_cj0483_rm_1_ws)
+
+        #1bp mismatched from each primer; cj0483; Will be affected by word size limit of 4
+        forward_out_file_cj0483_mm_1_ws = "/home/sfisher/Sequences/blast_record/forward_primers_blast_cj0483_mm_1_ws.xml"
+        reverse_out_file_cj0483_mm_1_ws = "/home/sfisher/Sequences/blast_record/reverse_primers_blast_cj0483_mm_1_ws.xml"
+        cj0483_mm_1_ws = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed/cj0483_mm_1.fasta"
+        cls._forward_blast_object_cj0008_mm_ws = PCRPrediction.create_blastn_object(forward_primers, cj0483_mm_1_ws, forward_out_file_cj0483_mm_1_ws)
+        cls._reverse_blast_object_cj0008_mm_ws = PCRPrediction.create_blastn_object(reverse_primers, cj0483_mm_1_ws, reverse_out_file_cj0483_mm_1_ws)
+
+
+
+    # cj0008_rm_2
+    def test_create_hsp_cj0008_rm_2(self):
+
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0008_rm_2.hsp_records.keys()), 1)
+
+        for blast_record in self._forward_blast_object_cj0008_rm_2.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._forward_blast_object_cj0008_rm_2.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._forward_blast_object_cj0008_rm_2.hsp_records[alignment], list)
+                    for hsp in self._forward_blast_object_cj0008_rm_2.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 18)
+                    self.assertIsInstance(self._forward_blast_object_cj0008_rm_2.hsp_records, dict)
+
+        for blast_record in self._reverse_blast_object_cj0008_rm_2.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._reverse_blast_object_cj0008_rm_2.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._reverse_blast_object_cj0008_rm_2.hsp_records[alignment], list)
+                    for hsp in self._reverse_blast_object_cj0008_rm_2.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 20)
+                    self.assertIsInstance(self._reverse_blast_object_cj0008_rm_2.hsp_records, dict)
+    #cj0008_rm_2_ws
+    def test_create_hsp_cj0008_rm_2_ws(self):
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0008_rm_2_ws.hsp_records.keys()), 0)
+
+    def test_create_hsp_cj0008_mm_1(self):
+
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0008_mm_2.hsp_records.keys()), 1)
+
+        for blast_record in self._forward_blast_object_cj0008_mm_2.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._forward_blast_object_cj0008_mm_2.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._forward_blast_object_cj0008_mm_2.hsp_records[alignment], list)
+                    for hsp in self._forward_blast_object_cj0008_mm_2.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 18)
+                    self.assertIsInstance(self._forward_blast_object_cj0008_mm_2.hsp_records, dict)
+
+        for blast_record in self._reverse_blast_object_cj0008_mm_2.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._reverse_blast_object_cj0008_mm_2.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._reverse_blast_object_cj0008_mm_2.hsp_records[alignment], list)
+                    for hsp in self._reverse_blast_object_cj0008_mm_2.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 20)
+                    self.assertIsInstance(self._reverse_blast_object_cj0008_mm_2.hsp_records, dict)
+
+    def test_create_hsp_cj0008_mm_2_ws(self):
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0008_mm_ws.hsp_records.keys()), 0)
+
+
+    # cj0483_rm_1
+    def test_create_hsp_cj0483_rm_1(self):
+
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0483_rm_1.hsp_records.keys()), 1)
+
+        for blast_record in self._forward_blast_object_cj0483_rm_1.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._forward_blast_object_cj0483_rm_1.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._forward_blast_object_cj0483_rm_1.hsp_records[alignment], list)
+                    for hsp in self._forward_blast_object_cj0483_rm_1.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 19)
+                    self.assertIsInstance(self._forward_blast_object_cj0483_rm_1.hsp_records, dict)
+
+        for blast_record in self._reverse_blast_object_cj0483_rm_1.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._reverse_blast_object_cj0483_rm_1.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._reverse_blast_object_cj0483_rm_1.hsp_records[alignment], list)
+                    for hsp in self._reverse_blast_object_cj0483_rm_1.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 20)
+                    self.assertIsInstance(self._reverse_blast_object_cj0483_rm_1.hsp_records, dict)
+    #cj0483_rm_1_ws
+    def test_create_hsp_cj0483_rm_1_ws(self):
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0483_rm_1_ws.hsp_records.keys()), 0)
+
+    def test_create_hsp_cj0483_mm_1(self):
+
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0483_mm_1.hsp_records.keys()), 1)
+
+        for blast_record in self._forward_blast_object_cj0483_mm_1.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._forward_blast_object_cj0483_mm_1.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._forward_blast_object_cj0483_mm_1.hsp_records[alignment], list)
+                    for hsp in self._forward_blast_object_cj0483_mm_1.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 19)
+                    self.assertIsInstance(self._forward_blast_object_cj0483_mm_1.hsp_records, dict)
+
+        for blast_record in self._reverse_blast_object_cj0483_mm_1.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._reverse_blast_object_cj0483_mm_1.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._reverse_blast_object_cj0483_mm_1.hsp_records[alignment], list)
+                    for hsp in self._reverse_blast_object_cj0483_mm_1.hsp_records[alignment]:
+                        self.assertEqual(hsp.identities, 20)
+                    self.assertIsInstance(self._reverse_blast_object_cj0483_mm_1.hsp_records, dict)
+
+    def test_create_hsp_cj0483_mm_1_ws(self):
+        self.assertGreaterEqual(len(self._reverse_blast_object_cj0008_mm_ws.hsp_records.keys()), 0)
+
+
+# class TestMultipleHspsFound(unittest.TestCase):
+#
+#     # @classmethod
+#     # def setUpClass(cls):
+#
+#     #both primer seq'n cj0008 & cj0483 found on one contig, 100% identities
+#     def test_both_primer_seq_same_contig(self):
+#
+#         db_name_mystery = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/mystery_db_entire_gene_61_bp_each_contig.fasta"
+#         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+#         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
+#         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+#         forward_out_file = '/home/sfisher/Sequences/blast_record/forward_blast.xml'
+#         reverse_out_file = '/home/sfisher/Sequences/blast_record/reverse_blast.xml'
+#         full_out_file = '/home/sfisher/Sequences/blast_record/full_out.xml'
 
 
 #TODO: test with the names of the db name being different than amplicon sequences.
