@@ -183,7 +183,7 @@ class TestPrimer(unittest.TestCase):
         self.assertTrue(test)  # makes sure both contigs are reached (db_length test)
 
     #complete amp
-    #Note: MX_DIST_BTWN_PRIEMRS = 50
+    #Note: MX_DIST_BTWN_PRIMERS = 50
     def test_is_distance_exact(self):
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         cj0483_complete_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_complete1.fasta"  # complete
@@ -193,7 +193,7 @@ class TestPrimer(unittest.TestCase):
                 if f_hsp_object.name == r_hsp_object.name:
                     #f_hsp_object and r_hsp_object should be on the same contig
                     self.assertEqual(f_hsp_object.contig_name, r_hsp_object.contig_name)
-                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, amplicon_sequences, cj0483_complete_amp_seq)
+                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, amplicon_sequences)
                     self.assertTrue(distance)
 
 class TestSNP(unittest.TestCase):
@@ -289,7 +289,7 @@ class TestSNP(unittest.TestCase):
 
         prediction = PCRPrediction.pcr_prediction(forward_primers, reverse_primers, cj0483_snp_1, forward_out_file,reverse_out_file, amplicon_sequences, full_out_file)
 
-        #Would normally produce True if it was the case that
+        #Would normally produce True if snp was not considered! Since I have not implemented snp into my pcr_prediction fcn, this should fail!
         self.assertEqual(prediction, [])
 
 
@@ -310,6 +310,7 @@ class TestEntireGene(unittest.TestCase):
         cj0483_contig_trunc_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_truncation.fasta"
         cj0483_contig_full_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_full.fasta"
         both_contigs_61bp_db_name_mystery = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/mystery_db_entire_gene_61_bp_each_contig.fasta"
+        cj0483_one_primer_found = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/cj0483_only_first_primer_found.fasta"
 
         #out files
         out_file_306 = '/home/sfisher/Sequences/blast_record/test_blast_306.xml'
@@ -320,38 +321,43 @@ class TestEntireGene(unittest.TestCase):
         out_file_contig_trunc = '/home/sfisher/Sequences/blast_record/test_blast_contig_trunc.xml'
         out_file_complete = '/home/sfisher/Sequences/blast_record/test_blast_complete.xml'
         out_file_mystery = '/home/sfisher/Sequences/blast_record/test_blast_mystery_61bp.xml'
+        out_file_one_primer = '/home/sfisher/Sequences/blast_record/one_primer_found.xml'
 
         #contig full
-        cls._blast_object_contig_full = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, cj0483_contig_full_amp_seq, out_file_contig_full)
+        cls._blast_object_contig_full = PCRPrediction.create_blastn_object(cls._amplicon_sequences, cj0483_contig_full_amp_seq, out_file_contig_full)
         cls._lo_hsp_objects_contig_full = PCRPrediction.create_hsp_objects(cls._blast_object_contig_full)
 
         #contig truncated
-        cls._blast_object_contig_trunc = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, cj0483_contig_trunc_amp_seq, out_file_contig_trunc)
+        cls._blast_object_contig_trunc = PCRPrediction.create_blastn_object(cls._amplicon_sequences, cj0483_contig_trunc_amp_seq, out_file_contig_trunc)
         cls._lo_hsp_objects_contig_trunc = PCRPrediction.create_hsp_objects(cls._blast_object_contig_trunc)
 
         #complete amp (no contigs)
-        cls._blast_object_complete = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, cj0483_complete_amp_seq, out_file_complete)
+        cls._blast_object_complete = PCRPrediction.create_blastn_object(cls._amplicon_sequences, cj0483_complete_amp_seq, out_file_complete)
         cls._lo_hsp_objects_complete = PCRPrediction.create_hsp_objects(cls._blast_object_complete)
 
         #both contigs length 306 bp
-        cls._blast_obj_306= PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, both_contigs_306_bp, out_file_306)
+        cls._blast_obj_306= PCRPrediction.create_blastn_object(cls._amplicon_sequences, both_contigs_306_bp, out_file_306)
         cls._lo_hsp_objects_306 = PCRPrediction.create_hsp_objects(cls._blast_obj_306)
 
         #both contigs length 27 bp
-        cls._blast_obj_27 = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, both_contigs_27_bp, out_file_27)
+        cls._blast_obj_27 = PCRPrediction.create_blastn_object(cls._amplicon_sequences, both_contigs_27_bp, out_file_27)
         cls._lo_hsp_objects_27 = PCRPrediction.create_hsp_objects(cls._blast_obj_27)
 
         #both contigs length 60 bp
-        cls._blast_obj_60 = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, both_contigs_60_bp, out_file_60)
+        cls._blast_obj_60 = PCRPrediction.create_blastn_object(cls._amplicon_sequences, both_contigs_60_bp, out_file_60)
         cls._lo_hsp_objects_60 = PCRPrediction.create_hsp_objects(cls._blast_obj_60)
 
         #both contigs length 61 bp
-        cls._blast_obj_61 = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, both_contigs_61_bp, out_file_61)
+        cls._blast_obj_61 = PCRPrediction.create_blastn_object(cls._amplicon_sequences, both_contigs_61_bp, out_file_61)
         cls._lo_hsp_objects_61 = PCRPrediction.create_hsp_objects(cls._blast_obj_61)
 
         #both contigs length 61 bp with a different db name then amplicon sequences
-        cls._blast_obj_61_mystery = PCRPrediction.create_blastn_full_search_object(cls._amplicon_sequences, both_contigs_61bp_db_name_mystery, out_file_mystery)
+        cls._blast_obj_61_mystery = PCRPrediction.create_blastn_object(cls._amplicon_sequences, both_contigs_61bp_db_name_mystery, out_file_mystery)
         cls._lo_hsp_objects_61_mystery = PCRPrediction.create_hsp_objects(cls._blast_obj_61_mystery)
+
+        #only one primer found
+        cls._blast_obj_one_primer = PCRPrediction.create_blastn_object(cls._amplicon_sequences, cj0483_one_primer_found, out_file_one_primer)
+        cls._lo_hsp_objects_one_primer = PCRPrediction.create_hsp_objects(cls._blast_obj_one_primer)
 
     #contigs trunc
     #search full gene
@@ -462,7 +468,7 @@ class TestEntireGene(unittest.TestCase):
             self.assertTrue(len(lo_queries) == 2)
             for query in lo_queries:
                 self.assertEqual(hsp_object.name, query.name)
-                self.assertTrue(query.valid)
+                self.assertIsNone(query.valid)
 
     #27 bp on each contig
     #TODO: finish testing me
@@ -485,7 +491,7 @@ class TestEntireGene(unittest.TestCase):
             self.assertTrue(len(lo_queries) == 2)
             for query in lo_queries:
                 self.assertEqual(hsp_object.name, query.name)
-                self.assertTrue(query.valid)
+                self.assertIsNone(query.valid)
 
     def test_entire_gene_61_db_name_different(self):
         self.assertGreaterEqual(len(self._lo_hsp_objects_61_mystery), 2)
@@ -494,7 +500,20 @@ class TestEntireGene(unittest.TestCase):
             self.assertTrue(len(lo_queries) == 2)
             for query in lo_queries:
                 self.assertEqual(hsp_object.name, query.name)
-                self.assertTrue(query.valid)
+                self.assertIsNone(query.valid)
+
+    def test_one_primer_found(self):
+        # for o in self._lo_hsp_objects_one_primer:
+        #     print(o.contig_name)
+        #     print(o.query)
+        #     print(o.sbjct)
+        # self.assertEqual(len(self._lo_hsp_objects_one_primer), 1)
+        for hsp_object in self._lo_hsp_objects_one_primer:
+            lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_one_primer, hsp_object)
+            self.assertTrue(len(lo_queries) == 1)
+            for query in lo_queries:
+                self.assertEqual(hsp_object.name, query.name)
+                self.assertIsNone(query.valid)
 
 
 class TestPCRDirectly(unittest.TestCase):
@@ -543,11 +562,9 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 1)
         self.assertEqual(len(r_hsp_objects), 1)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object, f_hsp_objects, r_hsp_objects)
+        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertTrue(f_hsp_object.valid)
         self.assertTrue(r_hsp_object.valid)
-        self.assertEqual(len(f_hsp_objects), 1)
-        self.assertEqual(len(r_hsp_objects), 1)
 
     def test_valid_strands_f_laggin_r_leading(self):
         f_hsp_object = HSP('sh0000')
@@ -560,11 +577,9 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 1)
         self.assertEqual(len(r_hsp_objects), 1)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object, f_hsp_objects, r_hsp_objects)
+        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertTrue(f_hsp_object.valid)
         self.assertTrue(r_hsp_object.valid)
-        self.assertEqual(len(f_hsp_objects), 1)
-        self.assertEqual(len(r_hsp_objects), 1)
 
     def test_valid_strands_f_leading_r_leading(self):
         f_hsp_object = HSP('sh0000')
@@ -577,11 +592,9 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 1)
         self.assertEqual(len(r_hsp_objects), 1)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object, f_hsp_objects, r_hsp_objects)
+        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertFalse(f_hsp_object.valid)
         self.assertFalse(r_hsp_object.valid)
-        self.assertEqual(len(f_hsp_objects), 0)
-        self.assertEqual(len(r_hsp_objects), 0)
 
     def test_valid_strands_f_lagging_r_lagging(self):
         f_hsp_object = HSP('sh0000')
@@ -595,11 +608,9 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 2)
         self.assertEqual(len(r_hsp_objects), 2)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object, f_hsp_objects, r_hsp_objects)
+        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertFalse(f_hsp_object.valid)
         self.assertFalse(r_hsp_object.valid)
-        self.assertEqual(len(f_hsp_objects), 1)
-        self.assertEqual(len(r_hsp_objects), 1)
 
     #20 mid bp removed
     #Note: MX_DIST_BTWN_PRIEMRS = 50
@@ -611,7 +622,7 @@ class TestPCRDirectly(unittest.TestCase):
                 if f_hsp_object.name == r_hsp_object.name:
                     #f_hsp_object and r_hsp_object should be on the same contig
                     self.assertEqual(f_hsp_object.contig_name, r_hsp_object.contig_name)
-                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, self._amplicon_sequences, cj0483_20_mid_bp_rm_amp_seq)
+                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, self._amplicon_sequences)
                     self.assertTrue(distance)
 
     #50 mid bp removed
@@ -624,7 +635,7 @@ class TestPCRDirectly(unittest.TestCase):
                 if f_hsp_object.name == r_hsp_object.name:
                     # f_hsp_object and r_hsp_object should be on the same contig
                     self.assertEqual(f_hsp_object.contig_name, r_hsp_object.contig_name)
-                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, self._amplicon_sequences, cj0483_50_mid_bp_rm_amp_seq)
+                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, self._amplicon_sequences)
                     self.assertTrue(distance)
 
     #51 mid bp removed
@@ -637,7 +648,7 @@ class TestPCRDirectly(unittest.TestCase):
                 if f_hsp_object.name == r_hsp_object.name:
                     # f_hsp_object and r_hsp_object should be on the same contig
                     self.assertEqual(f_hsp_object.contig_name, r_hsp_object.contig_name)
-                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, self._amplicon_sequences, cj0483_51_mid_bp_rm_amp_seq)
+                    distance = PCRPrediction.is_distance(f_hsp_object, r_hsp_object, self._amplicon_sequences)
                     self.assertFalse(distance)
 
     #50 mid bp removed
@@ -650,7 +661,7 @@ class TestPCRDirectly(unittest.TestCase):
                     if f_hsp_object.contig_name == r_hsp_object.contig_name:
                         # f_hsp_object and r_hsp_object should be on the same contig
                         self.assertEqual(f_hsp_object.contig_name, r_hsp_object.contig_name)
-                        val = PCRPrediction.pcr_directly(f_hsp_object, r_hsp_object, cj0483_50_mid_bp_rm_amp_seq, self._amplicon_sequences, self._lo_forward_hsp_objects_50, self._lo_reverse_hsp_objects_50)
+                        val = PCRPrediction.pcr_directly(f_hsp_object, r_hsp_object, self._amplicon_sequences)
                         self.assertTrue(val)
 
     #30 mid bp removed
@@ -663,7 +674,7 @@ class TestPCRDirectly(unittest.TestCase):
                     if f_hsp_object.contig_name == r_hsp_object.contig_name:
                         # f_hsp_object and r_hsp_object should be on the same contig
                         self.assertEqual(f_hsp_object.contig_name, r_hsp_object.contig_name)
-                        val = PCRPrediction.pcr_directly(f_hsp_object, r_hsp_object, cj0483_20_mid_bp_rm_amp_seq, self._amplicon_sequences, self._lo_forward_hsp_objects_20, self._lo_reverse_hsp_objects_20)
+                        val = PCRPrediction.pcr_directly(f_hsp_object, r_hsp_object, self._amplicon_sequences)
                         self.assertTrue(val)
 
 
