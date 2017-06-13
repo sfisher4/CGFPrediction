@@ -21,7 +21,7 @@ def blastn_query(query_genes, database, out_file):
     """
     #TODO: determine a word_size
     #TODO: restrict the evalue and mismatches
-    blastn_cline = NcbiblastnCommandline(query=query_genes, db=database, word_size=4, outfmt=5, out=out_file)
+    blastn_cline = NcbiblastnCommandline(query=query_genes, db=database, word_size=4, outfmt=5, out=out_file, evalue=E_VALUE_THRESHOLD)
     stdout, stderr = blastn_cline()
 
 def create_blastn_object(query_genes, database, out_file):
@@ -51,7 +51,7 @@ def create_hsp_objects(blastn_object):
         for alignment in blast_record.alignments:
             for hsp in alignment.hsps:
                 if alignment in blastn_object.hsp_records:
-                    if hsp.expect < E_VALUE_THRESHOLD:
+                    if hsp.expect < E_VALUE_THRESHOLD: #TODO: maybe remove this check b/c added evalue in blast query!!!
                         hsp_name = blast_record.query
                         hsp_object = HSP(hsp_name)  #creates a HSP object
                         hsp_object.start = hsp.sbjct_start
@@ -187,35 +187,53 @@ def pcr_directly(forward_hsp_object, reverse_hsp_object, amplicon_sequences):
 #     else:
 #         return False
 
+def valid_dir(lo_hsps):
+    """ Modify lo_hsps to only contain primer sequences that are facing the end of the contig.
+
+    :param lo_hsps: list of hsp objects
+    :return: None
+    """
+    for hsp in lo_hsps:
+        # considers the case where the entire strand is found
+        if (hsp.end == hsp.query_end or hsp.start == hsp.query_start) and not (hsp.end == hsp.query_end and hsp.start == hsp.query_start):
+            if hsp.strand == False and hsp.end == hsp.query_end:  # TODO: create threshold value for end differences
+                print(hsp.end)
+                print(hsp.query_end)
+                print(hsp.strand)
+                lo_hsps.remove(hsp)
+            elif hsp.strand == True and hsp.start == hsp.query_start:
+                print(hsp.start)
+                print(hsp.query_start)
+                print(hsp.strand)
+                lo_hsps.remove(hsp)
+
 # Given a list of hsp objects and a reference object, finds all of the occurrences of the reference object (name)
-# and determines if it of long enough length and in proper orientation to be considered found.
+# and determines if it is of long enough length and in proper orientation to be considered found.
 # Assumes that there are only 2 hsp objects of reference type in lo hsp objects
 #NOTE: f_object.name == r_object.name
+#only considers the case where one or two primers are found (not > 3)
 def entire_gene(lo_hsp_objects, reference_object):
-    """
+    """ Return the hsp objects from the same blast record query as reference_object that are of proper orientation and long enough length to be considered found.
 
-    :param lo_hsp_objects:
-    :param reference_object:
-    :return:
+    :param lo_hsp_objects: A list of hsp objects from a blastn search.
+    :param reference_object: A HSP object
+    :return: List of hsp objects
     """
-    lo_queries = []
+    #TODO: consider the case where lo_hsps have 3 elements?
+    #It would be highly unlikely that a gene will be found of long enough length on a database more than once?
 
+    lo_hsps = []
     for hsp_object in lo_hsp_objects:
         count = 0
         if reference_object.name in hsp_object.name:  # hsp_object.name may be longer than reference_object.name
-            #TODO: perhaps consider the case where lo_queries has 3 elements
-            count += 1
-            assert count != 3
             if not hsp_object.length <= CUTOFF_GENE_LENGTH:
-                lo_queries.append(hsp_object)
-        #TODO: consider one primer found and in right direction, and possibly ensure valid strands
-        # if len(lo_queries) == 2:
-        #     if not is_valid_entire_strands(lo_queries[0], lo_queries[1]):
-        #         lo_queries = [] #Only contains 2 elements: remove both
-        #consider one primer found
-        # if len(lo_queries) == 1:
-        #     return lo_queries
-    return lo_queries
+                count += 1
+                assert count != 3 #Deal with this case later if needed
+                lo_hsps.append(hsp_object)
+        valid_dir(lo_hsps) #make sure this modifies the list !!!
+        if len(lo_hsps) == 1:
+            print("only one primer found for", lo_hsps[0].name, "on", lo_hsps[0].contig_name)
+    return lo_hsps
 
 #TODO: Change return value to hash?
 def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file):
@@ -286,7 +304,7 @@ def main():
     # using an amplicon_sequence as database for testing purposes
     #takes in forward_primers and reverse_primers (queries), database (contigs or complete) [only one database!!!], full amplicon sequences that contain the forward and reverse primers inputted,
     # a forward and reverse out file where the blast results can go, a complete amplicon
-    return(pcr_prediction(forward_primers, reverse_primers, test_mystery_db_name_entire_gene, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file))
+    return(pcr_prediction(forward_primers, reverse_primers, cj0483_complete_amp_seq, forward_out_file, reverse_out_file, amplicon_sequences, full_out_file))
 
 
 if __name__ == "__main__": main()

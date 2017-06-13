@@ -310,7 +310,12 @@ class TestEntireGene(unittest.TestCase):
         cj0483_contig_trunc_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_truncation.fasta"
         cj0483_contig_full_amp_seq = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/cj0483_contig_full.fasta"
         both_contigs_61bp_db_name_mystery = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction/mystery_db_entire_gene_61_bp_each_contig.fasta"
-        cj0483_one_primer_found = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/cj0483_only_first_primer_found.fasta"
+        #one primer databases
+        one_primer_lead_end = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/one_primer_lead_end.fasta"
+        one_primer_lag_end = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/one_primer_lag_end.fasta"
+        one_primer_lead_start = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/one_primer_lead_start.fasta"
+        one_primer_lag_start = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/one_primer_lag_start.fasta"
+        one_primer_found_all = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_entire_gene_search/one_primer_found_all.fasta"
 
         #out files
         out_file_306 = '/home/sfisher/Sequences/blast_record/test_blast_306.xml'
@@ -321,7 +326,11 @@ class TestEntireGene(unittest.TestCase):
         out_file_contig_trunc = '/home/sfisher/Sequences/blast_record/test_blast_contig_trunc.xml'
         out_file_complete = '/home/sfisher/Sequences/blast_record/test_blast_complete.xml'
         out_file_mystery = '/home/sfisher/Sequences/blast_record/test_blast_mystery_61bp.xml'
-        out_file_one_primer = '/home/sfisher/Sequences/blast_record/one_primer_found.xml'
+        out_file_lead_end = '/home/sfisher/Sequences/blast_record/out_file_lead_end.xml'
+        out_file_lag_end = '/home/sfisher/Sequences/blast_record/out_file_lag_end.xml'
+        out_file_lead_start = '/home/sfisher/Sequences/blast_record/out_file_lead_start.xml'
+        out_file_lag_start = '/home/sfisher/Sequences/blast_record/out_file_lag_start.xml'
+        out_file_found_all = '/home/sfisher/Sequences/blast_record/out_file_found_all.xml'
 
         #contig full
         cls._blast_object_contig_full = PCRPrediction.create_blastn_object(cls._amplicon_sequences, cj0483_contig_full_amp_seq, out_file_contig_full)
@@ -355,9 +364,22 @@ class TestEntireGene(unittest.TestCase):
         cls._blast_obj_61_mystery = PCRPrediction.create_blastn_object(cls._amplicon_sequences, both_contigs_61bp_db_name_mystery, out_file_mystery)
         cls._lo_hsp_objects_61_mystery = PCRPrediction.create_hsp_objects(cls._blast_obj_61_mystery)
 
-        #only one primer found
-        cls._blast_obj_one_primer = PCRPrediction.create_blastn_object(cls._amplicon_sequences, cj0483_one_primer_found, out_file_one_primer)
-        cls._lo_hsp_objects_one_primer = PCRPrediction.create_hsp_objects(cls._blast_obj_one_primer)
+        #one primer found on leading strand at end of seq
+        cls._blast_obj_lead_end = PCRPrediction.create_blastn_object(cls._amplicon_sequences, one_primer_lead_end, out_file_lead_end)
+        cls._lo_hsp_objects_lead_end = PCRPrediction.create_hsp_objects(cls._blast_obj_lead_end)
+        #one primer found on lagging strand at end of seq
+        cls._blast_obj_lag_end = PCRPrediction.create_blastn_object(cls._amplicon_sequences, one_primer_lag_end, out_file_lag_end)
+        cls._lo_hsp_objects_lag_end = PCRPrediction.create_hsp_objects(cls._blast_obj_lag_end)
+        #one primer found on leading strand at start of seq
+        cls._blast_obj_lead_start = PCRPrediction.create_blastn_object(cls._amplicon_sequences, one_primer_lead_start, out_file_lead_start)
+        cls._lo_hsp_objects_lead_start = PCRPrediction.create_hsp_objects(cls._blast_obj_lead_start)
+        #one primer found on lagging strand at start of seq
+        cls._blast_obj_lag_start = PCRPrediction.create_blastn_object(cls._amplicon_sequences, one_primer_lag_start, out_file_lag_start)
+        cls._lo_hsp_objects_lag_start = PCRPrediction.create_hsp_objects(cls._blast_obj_lag_start)
+        #one primer found that covers the whole seq
+        cls._blast_obj_found_all = PCRPrediction.create_blastn_object(cls._amplicon_sequences, one_primer_found_all, out_file_found_all)
+        cls._lo_hsp_object_found_all = PCRPrediction.create_hsp_objects(cls._blast_obj_found_all)
+
 
     #contigs trunc
     #search full gene
@@ -422,6 +444,17 @@ class TestEntireGene(unittest.TestCase):
                             self.assertTrue(HSP_THRESHOLD <= hsp.identities / 61)
                     self.assertIsInstance(self._blast_obj_61_mystery.hsp_records, dict)
 
+    #one_primer_lead_end
+    def test_create_hsp_records_one_primer_lead_end(self):
+        self.assertGreaterEqual(len(self._blast_obj_lead_end.blast_records), 40)
+        for blast_record in self._blast_obj_lead_end.blast_records:
+            for alignment in blast_record.alignments:
+                if alignment in self._blast_obj_lead_end.hsp_records:  # ensures the hsp is in the alignment
+                    self.assertIsInstance(self._blast_obj_lead_end.hsp_records[alignment], list)
+                    for hsp in self._blast_obj_lead_end.hsp_records[alignment]:
+                            self.assertTrue(HSP_THRESHOLD <= hsp.identities / 61)
+                    self.assertIsInstance(self._blast_obj_lead_end.hsp_records, dict)
+        self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_records), 1)
 
     #contigs trunc
     #search full gene
@@ -457,7 +490,6 @@ class TestEntireGene(unittest.TestCase):
             self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
 
         self.assertTrue(test)  # makes sure both contigs are reached (db_length test)
-
 
     #306 bp on each contig
     #TODO: finish testing me
@@ -502,18 +534,41 @@ class TestEntireGene(unittest.TestCase):
                 self.assertEqual(hsp_object.name, query.name)
                 self.assertIsNone(query.valid)
 
-    def test_one_primer_found(self):
-        # for o in self._lo_hsp_objects_one_primer:
-        #     print(o.contig_name)
-        #     print(o.query)
-        #     print(o.sbjct)
-        # self.assertEqual(len(self._lo_hsp_objects_one_primer), 1)
-        for hsp_object in self._lo_hsp_objects_one_primer:
-            lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_one_primer, hsp_object)
-            self.assertTrue(len(lo_queries) == 1)
-            for query in lo_queries:
-                self.assertEqual(hsp_object.name, query.name)
-                self.assertIsNone(query.valid)
+    def test_one_primer_lead_end(self):
+        name = "cj0483"
+        cj0483_object = HSP(name)
+        lo_hsps = PCRPrediction.entire_gene(self._lo_hsp_objects_lead_end, cj0483_object)
+        self.assertGreaterEqual(len(self._lo_hsp_objects_lead_end), 1)
+        for hsp_object in self._lo_hsp_objects_lead_end:
+            self.assertEqual(hsp_object.strand, True)
+            self.assertNotEqual(hsp_object.end, hsp_object.query_end)
+            self.assertGreaterEqual(hsp_object.length, 61) #CUTOFF_GENE_LENGTH = 60
+        self.assertEqual(len(lo_hsps), 1)
+        self.assertIn('cj0483', lo_hsps[0].name)
+
+    def test_one_primer_lag_end(self):
+        name = "cj0483"
+        cj0483_object = HSP(name)
+        lo_hsps = PCRPrediction.entire_gene(self._lo_hsp_objects_lag_end, cj0483_object)
+        self.assertEqual(len(lo_hsps), 0)
+
+    def test_one_primer_lead_start(self):
+        name = "cj0483"
+        cj0483_object = HSP(name)
+        lo_hsps = PCRPrediction.entire_gene(self._lo_hsp_objects_lead_start, cj0483_object)
+        self.assertEqual(len(lo_hsps), 0)
+
+    def test_one_primer_lag_start(self):
+        name = "cj0483"
+        cj0483_object = HSP(name)
+        lo_hsps = PCRPrediction.entire_gene(self._lo_hsp_objects_lead_end, cj0483_object)
+        self.assertGreaterEqual(len(self._lo_hsp_objects_lead_end), 1)
+        for hsp_object in self._lo_hsp_objects_lead_end:
+            self.assertEqual(hsp_object.strand, True)
+            self.assertNotEqual(hsp_object.end, hsp_object.query_end)
+            self.assertGreaterEqual(hsp_object.length, 61) #CUTOFF_GENE_LENGTH = 60
+        self.assertEqual(len(lo_hsps), 1)
+        self.assertIn('cj0483', lo_hsps[0].name)
 
 
 class TestPCRDirectly(unittest.TestCase):
