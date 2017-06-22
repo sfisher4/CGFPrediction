@@ -9,13 +9,14 @@ class HSP(object):
         end: The end element of the hsp subject
         query_start: The start element of the hsp query
         query_end: The end element of the hsp query
+        identities:
         strand: True if hsp located on leading strand (+, template) and false if hsp located on lagging strand (-, complement)
         length: length of the hsp
         valid: True if the the leading and lagging strand is opposite (hsp is opposite to the other hsp on the same gene)
         db_length: the length of the db that the high sequence pair is located on
         contig_name: The name of the HSP based off of its contig
         snp: True if there is a 3' SNP within SNP_THRESHOLD distance from the 3' end of the hsp object compared to the primer.
-        sbjct: The subject's sequence
+        sbjct: The subject's sequence (db)
         query: The queries sequence
     """
     def __init__(self, name):
@@ -25,6 +26,7 @@ class HSP(object):
         self.end = -1   #not possible to have a start or end that starts at -1
         self.query_start = -1
         self.query_end = -1
+        self.identities = -1
         self.strand = None #assert strand is not None
         self.length = 0
         self.valid = None
@@ -33,6 +35,9 @@ class HSP(object):
         self.snp = None
         self.sbjct = ""
         self.query = ""
+
+    def set_name(self, name):
+        self.name = name
 
 
 
