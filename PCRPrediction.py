@@ -381,9 +381,10 @@ def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file,
     print('reverse')
     reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file, True)
     print(reverse_blast)
-    print('full')
-    blast_object = create_blastn_object(amplicon_sequences, database, full_out_file)
-    print(blast_object)
+    #TODO: UNCOMMENT BELOW!!! JUST DID TO SPEED UP TESTS
+    # print('full')
+    # blast_object = create_blastn_object(amplicon_sequences, database, full_out_file)
+    # print(blast_object)
 
     lo_queries = []
     dict_f_primers = create_primer_dict(forward_primers)
@@ -412,16 +413,11 @@ def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file,
 
     #f_r_hsp_object should not have duplicates when primer is on both contigs!!! only send the reference object once!!!
     #TODO: call entire gene using primers from lo_tup_pcr_directly!!! Add lo_tup_pcr_directly
-    for f_r_hsp_object in lo_tup_entire_gene:
-        lo_hsps = entire_gene(blast_object, f_r_hsp_object[1], dict_f_primers, dict_r_primers)
-        if len(lo_hsps) > 0:
-            lo_queries.append(lo_hsps)
-
-    print(lo_queries)
-    print(len(lo_queries))
-    for lo_hsps in lo_queries:
-        for hsp in lo_hsps:
-            print(hsp.name)
+    #TODO: UNCOMMENT BELOW!!! JUST DID TO SPEED UP TESTS!!!
+    # for f_r_hsp_object in lo_tup_entire_gene:
+    #     lo_hsps = entire_gene(blast_object, f_r_hsp_object[1], dict_f_primers, dict_r_primers)
+    #     if len(lo_hsps) > 0:
+    #         lo_queries.append(lo_hsps)
 
     return lo_queries
 
@@ -452,6 +448,7 @@ def main(db_directory, forward_primers, reverse_primers, amplicon_sequences):
     for file_path in files_paths:
         print('FILE!!!', file_path)
         name = file_path.partition(db_directory + "/")[2]
+        print(name)
         f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
         r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
         full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
@@ -465,7 +462,6 @@ def main(db_directory, forward_primers, reverse_primers, amplicon_sequences):
         result = pcr_prediction(forward_primers, reverse_primers, file_path, f_out_file_path, r_out_file_path, amplicon_sequences, full_out_file_path)
         pcr_predictions_dict[name] = result
 
-    print(len(pcr_predictions_dict))
     return(pcr_predictions_dict)
 
 
