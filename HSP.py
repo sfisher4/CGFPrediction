@@ -5,10 +5,10 @@ class HSP(object):
     Attributes:
         name: The name of the HSP based off of the query name
         expect: The expected frequency of chance occurrence of a HSP
-        start: The start element of the hsp subject
-        end: The end element of the hsp subject
-        query_start: The start element of the hsp query
-        query_end: The end element of the hsp query
+        start: The start element of the hsp in the subject
+        end: The end element of the hsp in the subject
+        query_start: The start element of the hsp in the query
+        query_end: The end element of hsp in the query
         identities:
         strand: True if hsp located on leading strand (+, template) and false if hsp located on lagging strand (-, complement)
         length: length of the hsp
@@ -18,23 +18,25 @@ class HSP(object):
         snp: True if there is a 3' SNP within SNP_THRESHOLD distance from the 3' end of the hsp object compared to the primer.
         sbjct: The subject's sequence (db)
         query: The queries sequence
+        gaps: Number of gaps in the hsp
     """
     def __init__(self, name):
-        self.name = name #The name of the hsp... including which node (contig) located on
+        self.name = name
         self.expect = -1
         self.start = -1 #not possible to have a start or end that starts at -1
         self.end = -1   #not possible to have a start or end that starts at -1
         self.query_start = -1
         self.query_end = -1
         self.identities = -1
-        self.strand = None #assert strand is not None
+        self.strand = None
         self.length = 0
         self.valid = None
         self.db_length = 0
-        self.contig_name = "" #ACTUALLY PUT THE CONTIG THE HSP IS ON!
+        self.contig_name = ""
         self.snp = None
         self.sbjct = ""
         self.query = ""
+        self.gaps = 0
 
     def set_name(self, name):
         self.name = name

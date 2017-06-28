@@ -3,7 +3,6 @@ from Bio import SeqIO
 from HSP import HSP
 
 E_VALUE_THRESHOLD = 0.04 #TODO: determine an e-value threshold
-HSP_THRESHOLD = 0.9 #todo: determine a HSP_THRESHOLD
 
 class Blastn(object):
     """ A blastn query Object from comparing two nucleotide sequences.
@@ -62,13 +61,29 @@ class Blastn(object):
         hsp_objects = []
         dict_hsp = {}
 
-        #TODO: speed up
+        #TODO: list comp!!!
         for blast_record in self.blast_records:
             for alignment in blast_record.alignments:
                 for gene in SeqIO.parse(query_genes, "fasta"):
                     #TODO: merge if statement with list comprehension
                     if blast_record.query in gene.name:
-                        lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / min(len(gene.seq), alignment.length))]
+                        # % identities
+                        # for hsp in alignment.hsps:
+                        #     print(hsp.identities)
+                        #     print(abs(hsp.sbjct_end - hsp.sbjct_start) + 1)
+                        #     print(alignment.length)
+                        #     print(min(len(gene.seq), alignment.length))
+                        #     print(hsp.sbjct)
+                        #     print((hsp.identities / min(len(gene.seq), alignment.length)))
+                        #used to be alignment.length but switched to the length of the hsp!!!
+                        #changed it so that I am comparing to the hsp length rather than the entire length of the contig!
+                        # I consider if it should be found based off of the entire length of the hsp found in entire_gene!
+                        # lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / min(len(gene.seq), abs(hsp.sbjct_start - hsp.sbjct_end) + 1))]
+                        #TODO: you are here!
+                        # lo_hsp = [hsp for hsp in alignment.hsps if HSP_THRESHOLD <= (hsp.identities / min(len(gene.seq), alignment.length))]
+                        #TODO: changed for % identity!!!
+                        lo_hsp = [hsp for hsp in alignment.hsps]
+                        # print(lo_hsp)
                         dict_hsp[alignment] = lo_hsp
 
                 for hsp in dict_hsp[alignment]:
@@ -87,6 +102,7 @@ class Blastn(object):
                     hsp_object.sbjct = hsp.sbjct
                     hsp_object.query = hsp.query
                     hsp_object.identities = hsp.identities
+                    hsp_object.gaps = hsp.gaps
 
                     # assuming no contigs (complete genome)
                     if hsp.sbjct_start < hsp.sbjct_end:

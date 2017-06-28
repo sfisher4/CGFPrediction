@@ -7,6 +7,7 @@ import PCRPrediction
 
 HSP_THRESHOLD = 0.9
 E_VALUE_THRESHOLD = 0.04
+CUTOFF_GENE_LENGTH = 60
 
     #Files available that will probably not be used
     # database = "/home/sfisher/Documents/example_genomes/complete/IA3902.fasta"  # contains id and a complete genome sequence
@@ -78,8 +79,8 @@ class TestWithAmp(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             print(file_path)
@@ -87,9 +88,9 @@ class TestWithAmp(unittest.TestCase):
             self.assertEqual(len(forward_blast_object.hsp_objects), 1)
             self.assertEqual(len(reverse_blast_object.hsp_objects), 1)
             if "contig" in file_path:
-                self.assertEqual(len(full_blast_object.hsp_objects), 2)
+                self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)  #very unrestrictive
             else:
-                self.assertEqual(len(full_blast_object.hsp_objects), 1)
+                self.assertGreaterEqual(len(full_blast_object.hsp_objects), 1)
 
             for hsp_object in forward_blast_object.hsp_objects:
                 self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
@@ -143,8 +144,8 @@ class TestWithAmp(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             f_primer_dict = PCRPrediction.create_primer_dict(forward_primers)
@@ -200,12 +201,18 @@ class TestWithAmp(unittest.TestCase):
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
-            for hsp in full_blast_object.hsp_objects:
-                if "NODE" in hsp.contig_name: #Assuming not the case where both primers are located on the same contig
+            count = 0
+            if "contig" in file_path: #Assuming not the case where both primers are located on the same contig
+                self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
+                for hsp in full_blast_object.hsp_objects:
                     results = PCRPrediction.entire_gene(full_blast_object, hsp, f_primer_dict, r_primer_dict)
-                    self.assertEqual(len(results), 2)
-                    self.assertIn(hsp, results)
-
+                    print('hsp name', hsp.name)
+                    if "cj0483" in hsp.name:
+                        print('...', count)
+                        count += 1
+                        self.assertEqual(len(results), 2)
+                        self.assertIn(hsp, results)
+                self.assertEqual(count, 2)
 
 
 class TestGeneAnnotationError(unittest.TestCase):
@@ -275,8 +282,8 @@ class TestGeneAnnotationError(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
             objects = []
             objects.append(forward_blast_object)
@@ -316,8 +323,8 @@ class TestGeneAnnotationError(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             for f_hsp in forward_blast_object.hsp_objects:
                 r_hsps = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.contig_name == f_hsp.contig_name and hsp.name == f_hsp.name]
@@ -360,7 +367,6 @@ class TestGeneAnnotationError(unittest.TestCase):
                     for result in results:
                         self.assertFalse(result.snp)
 
-
     def test_entire_gene(self):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
@@ -383,19 +389,28 @@ class TestGeneAnnotationError(unittest.TestCase):
                 raise
             pass
 
-        count = 0
         for file_path in files_paths:
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            if "contig" in file_path:
+                self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
 
-            for hsp in full_blast_object.hsp_objects:
-                if "NODE" in hsp.contig_name:
-                    count += 1
+                count = 0
+                for hsp in full_blast_object.hsp_objects:
                     lo_result = PCRPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
-                    self.assertEqual(len(lo_result), 2)
-                    self.assertIn(hsp, lo_result)
-        self.assertEqual(count, 4)
+
+                    if "cj1134" in hsp.name and "cj1134" in file_path:
+                        count += 1
+                        self.assertEqual(len(lo_result), 2)
+                        self.assertIn(hsp, lo_result)
+                    elif "cj1324" in hsp.name and "cj1324" in file_path:
+                        count += 1
+                        self.assertEqual(len(lo_result), 2)
+                        self.assertIn(hsp, lo_result)
+                    else:
+                        self.assertEqual(len(lo_result), 0)
+                self.assertEqual(count, 2)
 
     #TODO: more thorough tests here?
     def test_pcr_prediction(self):
@@ -412,6 +427,7 @@ class TestGeneAnnotationError(unittest.TestCase):
 
 class TestSNPPrimers(unittest.TestCase):
 
+    #90% QCOV hsp
     def test_snp(self):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
@@ -437,12 +453,12 @@ class TestSNPPrimers(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
-            self.assertGreaterEqual(len(forward_blast_object.hsp_objects), 1)
-            self.assertGreaterEqual(len(reverse_blast_object.hsp_objects), 1)
             if "6" in file_path:
+                self.assertGreaterEqual(len(forward_blast_object.hsp_objects), 1)
+                self.assertGreaterEqual(len(reverse_blast_object.hsp_objects), 1)
                 for hsp in forward_blast_object.hsp_objects:
                     self.assertIsNone(hsp.snp)
                     PCRPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
@@ -666,7 +682,7 @@ class TestContigTrunc(unittest.TestCase):
             print(file_path)
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path, False)
             self.assertGreaterEqual(len(blast_object.blast_records), 40)
             self.assertGreaterEqual(len(blast_object.hsp_objects), 2)
 
@@ -687,38 +703,6 @@ class TestContigTrunc(unittest.TestCase):
                 self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
                 self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
 
-    #TODO: you are here!!!
-    def test_pcr_prediction(self):
-        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-        f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
-        r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
-        db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
-        files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
-
-        files_paths = []
-        for file in files:
-            files_paths.append(os.path.abspath(db_directory) + '/' + file)
-
-        # create new folder for out files
-        try:
-            os.mkdir(db_directory + "/out_files")
-        except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise
-            pass
-
-        for file_path in files_paths:
-            name = file_path.partition(db_directory + "/")[2]
-            f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
-            r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            full_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            # forward_blast_object = PCRPrediction.create_blastn_object(f_primers, file_path, f_out_file_path)
-            # reverse_blast_object = PCRPrediction.create_blastn_object(r_primers, file_path, r_out_file_path)
-            lo_hsp_predictions = PCRPrediction.pcr_prediction(f_primers, r_primers, db_directory, f_out_file_path, r_out_file_path, amplicon_sequences, full_out_file_path)
-            # if "61" in file_path:
-            #     self.assertEqual(len(lo_hsp_predictions), 2)
-            #     for hsp in lo_hsp_predictions:
-
 
 
 #     #complete amp
@@ -738,189 +722,224 @@ class TestContigTrunc(unittest.TestCase):
 #     # #complete amp, random bp removed > % identities
 #     # #306 on both strands, with
 #     # def test_create_hsp_records_high_perc_identities(self):
-#
-# #TODO: combine create_hsp_objects tests
-#     # contigs trunc
-#     # full gene search
-#     def test_create_hsp_objects_full_search_contigs(self):
-#         self.assertGreaterEqual(len(self._blast_object_contig_trunc.hsp_objects), 2)
-#
-#         for hsp in self._blast_object_contig_trunc.hsp_objects:
-#                 if "NODE_1" in hsp.contig_name:
-#                     self.assertTrue(HSP_THRESHOLD <= hsp.identities / 376)
-#                 elif "NODE_2" in hsp.contig_name:
-#                     self.assertTrue(HSP_THRESHOLD <= hsp.identities / 228)
-#                 else:
-#                     self.assertFalse(True, 'should never reach here unless more than two nodes or error')
-#
-#         test = False
-#         for hsp_object in self._blast_object_contig_trunc.hsp_objects:
-#             # tests name
-#             self.assertIn('cj0483', hsp_object.name)
-#             # tests db_length
-#             if 'NODE_1' in hsp_object.contig_name:
-#                 self.assertEqual(hsp_object.db_length, 376)
-#             elif 'NODE_2' in hsp_object.contig_name:
-#                 self.assertEqual(hsp_object.db_length, 228)
-#                 test = True  # make sure both contigs are reached
-#             else:
-#                 self.assertWarns("shouldn't reach here!!!")
-#
-#             self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
-#             self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
-#             self.assertNotEqual(hsp_object.expect, -1)
-#             self.assertNotEqual(hsp_object.start, -1)
-#             self.assertNotEqual(hsp_object.end, -1)
-#             self.assertNotEqual(hsp_object.start, hsp_object.end)
-#             if hsp_object.start < hsp_object.end:
-#                 self.assertTrue(hsp_object.strand)
-#             if hsp_object.end < hsp_object.start:
-#                 self.assertFalse(hsp_object.strand)
-#             self.assertIsNotNone(hsp_object.strand)
-#             self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
-#             self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
-#             self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
-#             self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
-#
-#         self.assertTrue(test)  # makes sure both contigs are reached (db_length test)
-#
-#     #contigs trunc (61 each contig)
-#     #full gene search
-#     def test_create_hsp_objects_full_search_contigs_mystery(self):
-#         self.assertGreaterEqual(len(self._blast_obj_61_mystery.hsp_objects), 2)
-#
-#         for hsp in self._blast_obj_61_mystery.hsp_objects:
-#             self.assertTrue(HSP_THRESHOLD <= hsp.identities / 61)
-#
-#         for hsp_object in self._blast_obj_61_mystery.hsp_objects:
-#             # tests name
-#             self.assertIn('cj0483', hsp_object.name)
-#             # tests db_length
-#             self.assertEqual(hsp_object.db_length, 61)
-#             self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
-#             self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
-#             self.assertNotEqual(hsp_object.expect, -1)
-#             self.assertNotEqual(hsp_object.start, -1)
-#             self.assertNotEqual(hsp_object.end, -1)
-#             self.assertNotEqual(hsp_object.start, hsp_object.end)
-#             if hsp_object.start < hsp_object.end:
-#                 self.assertTrue(hsp_object.strand)
-#             if hsp_object.end < hsp_object.start:
-#                 self.assertFalse(hsp_object.strand)
-#             self.assertIsNotNone(hsp_object.strand)
-#             self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
-#             self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
-#             self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
-#             self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
-#
-#     #one_primer_lead_end
-#     def test_create_hsp_objects_one_primer_lead_end(self):
-#         self.assertGreaterEqual(len(self._blast_obj_lead_end.blast_records), 40)
-#         self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_objects), 1)
-#
-#         for hsp in self._blast_obj_61_mystery.hsp_objects:
-#             self.assertTrue(HSP_THRESHOLD <= hsp.identities / 61)
-#
-#         for hsp_object in self._blast_obj_61_mystery.hsp_objects:
-#             # tests name
-#             self.assertIn('cj0483', hsp_object.name)
-#             # tests db_length
-#             self.assertEqual(hsp_object.db_length, 61)
-#             self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
-#             self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
-#             self.assertNotEqual(hsp_object.expect, -1)
-#             self.assertNotEqual(hsp_object.start, -1)
-#             self.assertNotEqual(hsp_object.end, -1)
-#             self.assertNotEqual(hsp_object.start, hsp_object.end)
-#             if hsp_object.start < hsp_object.end:
-#                 self.assertTrue(hsp_object.strand)
-#             if hsp_object.end < hsp_object.start:
-#                 self.assertFalse(hsp_object.strand)
-#             self.assertIsNotNone(hsp_object.strand)
-#             self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
-#             self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
-#             self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
-#             self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
 
-#TODO: look over!!!
+
     def test_pcr_prediction_contig_trunc(self):
-        db = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
-        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
-        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+        r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
+        db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
 
-        dict_predictions = PCRPrediction.main(db, forward_primers, reverse_primers, amplicon_sequences)
+        files = [file for file in os.listdir(db_directory) if file.endswith(".fasta")]
+        files_paths = []
+        for file in files:
+            files_paths.append(os.path.abspath(db_directory) + '/' + file)
 
-        predictions_pass = [pred for pred in dict_predictions if "61" in pred or "lag_start" in pred or "lead_end" in pred or "306" in pred or "found_all" in pred]
-        predictions = [pred for pred in dict_predictions if pred not in predictions_pass]
-        for pred in predictions_pass:
-            print('pred', pred)
-            self.assertNotEqual([], dict_predictions[pred], pred)
-            self.assertEqual(len(dict_predictions[pred]), 1)
-            for matches in dict_predictions[pred]:
-                self.assertEqual(len(matches), 2)
-        for pred in predictions:
-            self.assertEqual([], dict_predictions[pred])
+        # create new folder for out files
+        try:
+            os.mkdir(db_directory + "/out_files")
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+            pass
+
+        for file_path in files_paths:
+            name = file_path.partition(db_directory + "/")[2]
+            full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+            forward_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
+            reverse_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
+            hsp_predictions = PCRPrediction.pcr_prediction(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
+
+            if "61" in file_path or "306" in file_path:
+                self.assertEqual(len(hsp_predictions), 1)
+                for lo_hsp in hsp_predictions:
+                    self.assertEqual(len(lo_hsp), 2)
+                    for hsp in lo_hsp:
+                        self.assertIn("NODE", hsp.contig_name)
+            else:
+                self.assertEqual(len(hsp_predictions), 0)
 
     def test_entire_gene(self):
-        self.assertTrue(False)
-        #TODO!!!
-    #
-    # def test_one_primer_lead_end(self):
-    #     name = "cj0483"
-    #     cj0483_object = HSP(name)
-    #     lo_hsps = PCRPrediction.entire_gene(self._blast_obj_lead_end.hsp_objects, cj0483_object, self._f_primers, self._r_primers)
-    #     self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_objects), 1)
-    #     for hsp_object in self._blast_obj_lead_end.hsp_objects:
-    #         self.assertEqual(hsp_object.strand, True)
-    #         self.assertNotEqual(hsp_object.end, hsp_object.query_end)
-    #         self.assertGreaterEqual(hsp_object.length, 61) #CUTOFF_GENE_LENGTH = 60
-    #     self.assertEqual(len(lo_hsps), 1)
-    #     self.assertIn('cj0483', lo_hsps[0].name)
+        amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+        f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+        f_primers_dict = PCRPrediction.create_primer_dict(f_primers)
+        r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
+        r_primers_dict = PCRPrediction.create_primer_dict(r_primers)
+        db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
+        files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
+        files_paths = []
+        for file in files:
+            files_paths.append(os.path.abspath(db_directory) + '/' + file)
+
+        # create new folder for out files
+        try:
+            os.mkdir(db_directory + "/out_files")
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+            pass
+
+        for file_path in files_paths:
+            name = file_path.partition(db_directory + "/")[2]
+            full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+
+            self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
+            count = 0
+            for hsp in full_blast_object.hsp_objects:
+                entire_gene_result = PCRPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
+
+                if "61" in file_path or "306" in file_path:
+                    if "cj0483" in hsp.name:
+                        count += 1
+                        self.assertEqual(len(entire_gene_result), 2)
+                    else:
+                        self.assertEqual(len(entire_gene_result), 0)
+                else:
+                    self.assertEqual(len(entire_gene_result), 0)
+
+            if "61" in file_path or "306" in file_path:
+                self.assertGreaterEqual(count, 2)
+
+#TODO: !!!
+# class TestOnePrimer(unittest.TestCase):
+#
+#     def test_create_blastn_objects(self):
+#         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+#         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
+#         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
+#
+#         files_paths = []
+#         for file in files:
+#             files_paths.append(os.path.abspath(db_directory) + '/' + file)
+#
+#         # create new folder for out files
+#         try:
+#             os.mkdir(db_directory + "/out_files")
+#         except OSError as exc:
+#             if exc.errno != errno.EEXIST:
+#                 raise
+#             pass
+#
+#         for file_path in files_paths:
+#             print(file_path)
+#             name = file_path.partition(db_directory + "/")[2]
+#             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+#             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+#             self.assertEqual(len(full_blast_object.blast_records), 40)
+#             self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
+#
+#     def test_valid_dir(self):
+#         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+#         f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+#         r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
+#         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
+#         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
+#
+#         files_paths = []
+#         for file in files:
+#             files_paths.append(os.path.abspath(db_directory) + '/' + file)
+#
+#         # create new folder for out files
+#         try:
+#             os.mkdir(db_directory + "/out_files")
+#         except OSError as exc:
+#             if exc.errno != errno.EEXIST:
+#                 raise
+#             pass
+#
+#         for file_path in files_paths:
+#             print(file_path)
+#             name = file_path.partition(db_directory + "/")[2]
+#             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+#             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+#
+#             if len(full_blast_object.hsp_objects) != 0:
+#                 if "pass" in file_path:
+#                     self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
+#                     reference_list = [hsp for hsp in full_blast_object.hsp_objects if not hsp.length <= CUTOFF_GENE_LENGTH]
+#
+#                     PCRPrediction.valid_dir(reference_list)
+#                     self.assertEqual(len(reference_list), 2)
+#                 else:
+#                     self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
+#                     PCRPrediction.valid_dir(full_blast_object.hsp_objects)
+#                     self.assertEqual(len(full_blast_object.hsp_objects), 0)
+
+    #TODO: !!!
+    # def test_entire_gene(self):
+    #     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+    #     f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+    #     r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
+    #     db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
+    #     files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
     #
+    #     files_paths = []
+    #     for file in files:
+    #         files_paths.append(os.path.abspath(db_directory) + '/' + file)
     #
-    # #306 bp on each contig
-    # #TODO: finish testing me
-    # def test_entire_gene_306(self):
-    #     for hsp_object in self._lo_hsp_objects_306:
-    #         lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_306, hsp_object, self._f_primers, self._r_primers)
-    #         self.assertTrue(len(lo_queries) == 2)
-    #         for query in lo_queries:
-    #             self.assertEqual(hsp_object.name, query.name)
-    #             self.assertIsNone(query.valid)
+    #     # create new folder for out files
+    #     try:
+    #         os.mkdir(db_directory + "/out_files")
+    #     except OSError as exc:
+    #         if exc.errno != errno.EEXIST:
+    #             raise
+    #         pass
     #
-    # #27 bp on each contig
-    # #TODO: finish testing me
-    # def test_entire_gene_27(self):
-    #     self.assertGreaterEqual(len(self._lo_hsp_objects_27), 2)
-    #     for hsp_object in self._lo_hsp_objects_27:
-    #         lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_27, hsp_object, self._f_primers, self._r_primers)
-    #         self.assertTrue(len(lo_queries) == 0)
+    #     for file_path in files_paths:
+    #         print(file_path)
+    #         name = file_path.partition(db_directory + "/")[2]
+    #         full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+    #         full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
     #
-    # def test_entire_gene_60(self):
-    #     self.assertTrue(len(self._lo_hsp_objects_60) >= 2)
-    #     for hsp_object in self._lo_hsp_objects_60:
-    #         lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_60, hsp_object, self._f_primers, self._r_primers)
-    #         self.assertEqual(len(lo_queries), 0)
+    #         self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
+    #         count = 0
+    #         for hsp in full_blast_object.hsp_objects:
+    #             entire_gene_result = PCRPrediction.entire_gene(full_blast_object, hsp, f_primers_dict=PCRPrediction.create_primer_dict(f_primers), r_primers_dict=PCRPrediction.create_primer_dict(r_primers))
+    #             if "pass" in file_path:
+    #                 if "cj0483" in hsp.name:
+    #                     count += 1
+    #                     self.assertEqual(len(entire_gene_result), 2)
+    #                 else:
+    #                     self.assertEqual(len(entire_gene_result), 0)
+    #             else:
+    #                 self.assertEqual(len(entire_gene_result), 0)
     #
-    # def test_entire_gene_61(self):
-    #     self.assertTrue(len(self._lo_hsp_objects_61) >= 2)
-    #     for hsp_object in self._lo_hsp_objects_61:
-    #         lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_61, hsp_object, self._f_primers, self._r_primers)
-    #         self.assertTrue(len(lo_queries) == 2)
-    #         for query in lo_queries:
-    #             self.assertEqual(hsp_object.name, query.name)
-    #             self.assertIsNone(query.valid)
-    #
-    # def test_entire_gene_61_db_name_different(self):
-    #     self.assertGreaterEqual(len(self._lo_hsp_objects_61_mystery), 2)
-    #     for hsp_object in self._lo_hsp_objects_61_mystery:
-    #         lo_queries = PCRPrediction.entire_gene(self._lo_hsp_objects_61_mystery, hsp_object, self._f_primers, self._r_primers)
-    #         self.assertTrue(len(lo_queries) == 2)
-    #         for query in lo_queries:
-    #             self.assertEqual(hsp_object.name, query.name)
-    #             self.assertIsNone(query.valid)
+    #         if "pass" in file_path:
+    #             self.assertEqual(count, 2)
+
+
+# class TestOnePrimerFound(unittest.TestCase):
+#
+#     def test_create_hsp_objects(self):
+#         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+#         f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+#         f_primers_dict = PCRPrediction.create_primer_dict(f_primers)
+#         r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
+#         r_primers_dict = PCRPrediction.create_primer_dict(r_primers)
+#         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
+#         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
+#
+#         files_paths = []
+#         for file in files:
+#             files_paths.append(os.path.abspath(db_directory) + '/' + file)
+#
+#         # create new folder for out files
+#         try:
+#             os.mkdir(db_directory + "/out_files")
+#         except OSError as exc:
+#             if exc.errno != errno.EEXIST:
+#                 raise
+#             pass
+#
+#         for file_path in files_paths:
+#             print(file_path)
+#             name = file_path.partition(db_directory + "/")[2]
+#             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+#             full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+#
+#         self.assertTrue(False)
 
     #
     # def test_one_primer_lag_end(self):
@@ -946,11 +965,49 @@ class TestContigTrunc(unittest.TestCase):
     #         self.assertGreaterEqual(hsp_object.length, 61) #CUTOFF_GENE_LENGTH = 60
     #     self.assertEqual(len(lo_hsps), 1)
     #     self.assertIn('cj0483', lo_hsps[0].name)
-    #
 
-class TestOnePrimerFound(unittest.TestCase):
-    def test_create_hsp_objects(self):
-        self.assertTrue(False)
+
+    #     #one_primer_lead_end
+    #     def test_create_hsp_objects_one_primer_lead_end(self):
+    #         self.assertGreaterEqual(len(self._blast_obj_lead_end.blast_records), 40)
+    #         self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_objects), 1)
+    #
+    #         for hsp in self._blast_obj_61_mystery.hsp_objects:
+    #             self.assertTrue(HSP_THRESHOLD <= hsp.identities / 61)
+    #
+    #         for hsp_object in self._blast_obj_61_mystery.hsp_objects:
+    #             # tests name
+    #             self.assertIn('cj0483', hsp_object.name)
+    #             # tests db_length
+    #             self.assertEqual(hsp_object.db_length, 61)
+    #             self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
+    #             self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
+    #             self.assertNotEqual(hsp_object.expect, -1)
+    #             self.assertNotEqual(hsp_object.start, -1)
+    #             self.assertNotEqual(hsp_object.end, -1)
+    #             self.assertNotEqual(hsp_object.start, hsp_object.end)
+    #             if hsp_object.start < hsp_object.end:
+    #                 self.assertTrue(hsp_object.strand)
+    #             if hsp_object.end < hsp_object.start:
+    #                 self.assertFalse(hsp_object.strand)
+    #             self.assertIsNotNone(hsp_object.strand)
+    #             self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
+    #             self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
+    #             self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
+    #             self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
+    #
+    # def test_one_primer_lead_end(self):
+    #     name = "cj0483"
+    #     cj0483_object = HSP(name)
+    #     lo_hsps = PCRPrediction.entire_gene(self._blast_obj_lead_end.hsp_objects, cj0483_object, self._f_primers, self._r_primers)
+    #     self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_objects), 1)
+    #     for hsp_object in self._blast_obj_lead_end.hsp_objects:
+    #         self.assertEqual(hsp_object.strand, True)
+    #         self.assertNotEqual(hsp_object.end, hsp_object.query_end)
+    #         self.assertGreaterEqual(hsp_object.length, 61) #CUTOFF_GENE_LENGTH = 60
+    #     self.assertEqual(len(lo_hsps), 1)
+    #     self.assertIn('cj0483', lo_hsps[0].name)
+
 
 class TestPCRDirectly(unittest.TestCase):
 
@@ -1039,8 +1096,8 @@ class TestPCRDirectly(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             for f_hsp_object in forward_blast_object.hsp_objects:
                 r_objects = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.name in f_hsp_object.name]
@@ -1078,8 +1135,8 @@ class TestPCRDirectly(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             for f_hsp_object in forward_blast_object.hsp_objects:
                 r_objects = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.name in f_hsp_object.name]
@@ -1119,8 +1176,8 @@ class TestPCRDirectly(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             self.assertGreater(len(forward_blast_object.hsp_objects), 0)
             for f_hsp_object in forward_blast_object.hsp_objects:
@@ -1214,49 +1271,95 @@ class TestBPRemoved(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             if "_ws" in file_path: #"ws"
-                self.assertEqual(len(forward_blast_object.hsp_objects), 0)
+                # self.assertEqual(len(forward_blast_object.hsp_objects), 0) #hsp objects are added but are of too short length
                 self.assertIsInstance(forward_blast_object.hsp_objects, list)
 
             elif "_ws" not in file_path:
                 self.assertGreaterEqual(len(forward_blast_object.hsp_objects), 1)
                 self.assertIsInstance(forward_blast_object.hsp_objects, list)
 
-                if "cj0008" in file_path:
-                    for hsp in forward_blast_object.hsp_objects:
-                        self.assertEqual(hsp.identities, 18)
-                    for hsp in reverse_blast_object.hsp_objects:
-                        self.assertEqual(hsp.identities, 20)
-                elif "cj0483" in file_path:
-                    for hsp in forward_blast_object.hsp_objects:
-                        self.assertEqual(hsp.identities, 19)
-                    for hsp in reverse_blast_object.hsp_objects:
-                        self.assertEqual(hsp.identities, 20)
-                else:
-                    self.assertFalse(True) #ensures all files are tested
+                for hsp_object in forward_blast_object.hsp_objects:
+                    self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
+                    self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
+                    self.assertNotEqual(hsp_object.expect, -1)
+                    self.assertNotEqual(hsp_object.start, -1)
+                    self.assertNotEqual(hsp_object.end, -1)
+                    self.assertNotEqual(hsp_object.start, hsp_object.end)
+                    if hsp_object.start < hsp_object.end:
+                        self.assertTrue(hsp_object.strand)
+                    if hsp_object.end < hsp_object.start:
+                        self.assertFalse(hsp_object.strand)
+                    self.assertIsNotNone(hsp_object.strand)
+                    self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
+                    self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
+                    self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
+                    self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
+
+                for hsp_object in reverse_blast_object.hsp_objects:
+                    self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
+                    self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
+                    self.assertNotEqual(hsp_object.expect, -1)
+                    self.assertNotEqual(hsp_object.start, -1)
+                    self.assertNotEqual(hsp_object.end, -1)
+                    self.assertNotEqual(hsp_object.start, hsp_object.end)
+                    if hsp_object.start < hsp_object.end:
+                        self.assertTrue(hsp_object.strand)
+                    if hsp_object.end < hsp_object.start:
+                        self.assertFalse(hsp_object.strand)
+                    self.assertIsNotNone(hsp_object.strand)
+                    self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
+                    self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
+                    self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
+                    self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
+
+                # if "cj0008" in file_path:
+                #     for hsp in forward_blast_object.hsp_objects:
+                #         self.assertEqual(hsp.identities, 18)
+                #     for hsp in reverse_blast_object.hsp_objects:
+                #         self.assertEqual(hsp.identities, 20)
+                # elif "cj0483" in file_path:
+                #     for hsp in forward_blast_object.hsp_objects:
+                #         self.assertEqual(hsp.identities, 19)
+                #     for hsp in reverse_blast_object.hsp_objects:
+                #         self.assertEqual(hsp.identities, 20)
+                # else:
+                #     self.assertFalse(True) #ensures all files are tested
 
             else:
                 self.assertFalse(True) #ensures all files are tested
 
     def test_pcr_prediction_bp_removed(self):
 
-        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
-        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
+        forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+        reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-        dict_predictions = PCRPrediction.main("/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed", forward_primers, reverse_primers, amplicon_sequences)
+        db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
+        dict_predictions = PCRPrediction.main(db_directory, forward_primers, reverse_primers, amplicon_sequences)
 
         predictions_ws = [pred for pred in dict_predictions if "_ws" in pred]
         predictions = [pred for pred in dict_predictions if pred not in predictions_ws]
-        self.assertGreater(len(predictions_ws), 0)
-        self.assertGreater(len(predictions), 0)
-        for pred in predictions_ws:
-            self.assertEqual([], dict_predictions[pred])
-        for pred in predictions:
-            self.assertNotEqual([], dict_predictions[pred])
 
+
+        self.assertEqual(len(predictions_ws), 4)
+        for pred in predictions_ws:
+            self.assertEqual(len(dict_predictions[pred]), 0)
+        self.assertEqual(len(predictions), 4)
+
+        files = [file for file in os.listdir(db_directory) if file.endswith('.fasta')]
+        files_paths = []
+        for file in files:
+            files_paths.append(os.path.abspath(db_directory) + '/' + file)
+        for file in files_paths:
+            name = file.partition(db_directory + "/")[2]
+            if "_ws" not in name:
+                self.assertGreaterEqual(len(dict_predictions[name]), 1)
+                for pred in dict_predictions[name]:
+                    self.assertNotEqual([], len(pred))
+                    self.assertEqual(len(pred), 2)
 
 # class TestMultipleHspsFound(unittest.TestCase):
 #

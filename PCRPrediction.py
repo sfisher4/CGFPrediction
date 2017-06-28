@@ -6,6 +6,7 @@ from Bio.Alphabet import generic_dna
 from HSP import HSP
 import os
 import errno
+import itertools
 from collections import defaultdict
 
 #TODO: determine all threshold values
@@ -14,8 +15,11 @@ MAX_DIST_BTWN_PRIMERS = 50 #<=
 CUTOFF_GENE_LENGTH = 60
 SNP_THRESHOLD = 5 #5 bp must be an exact match with 3' end of primer
 VALID_DIR_THRESHOLD = 2 # The amount of bp's that can be located on end/start of db primer before reaching the end/start of amp
+HSP_THRESHOLD = 90.0
+WORD_SIZE = 4
+QCOV_HSP_PERC = 90.0
 
-def blastn_query(query_genes, database, out_file):
+def blastn_query(query_genes, database, out_file, type):
     """ Outputs a blastn query into an xml file.
 
     :param query_genes: A fasta file that contains the query genes that are being searched in the database
@@ -26,10 +30,17 @@ def blastn_query(query_genes, database, out_file):
     """
     #TODO: determine a word_size
     #TODO: restrict the evalue and mismatches
-    blastn_cline = NcbiblastnCommandline(query=query_genes, db=database, word_size=4, outfmt=5, out=out_file, evalue=E_VALUE_THRESHOLD)
+    #TODO: changed perc_identity!!!
+    #TODO: qcoer only done when called by pcr_directly!!! OPTIONAL INPUT
+    if type == True:
+        blastn_cline = NcbiblastnCommandline(query=query_genes, db=database, word_size=WORD_SIZE, outfmt=5, out=out_file,
+                                             evalue=E_VALUE_THRESHOLD, perc_identity=HSP_THRESHOLD, qcov_hsp_perc=QCOV_HSP_PERC)
+    else:
+        blastn_cline = NcbiblastnCommandline(query=query_genes, db=database, word_size=WORD_SIZE, outfmt=5,
+                                             out=out_file, evalue=E_VALUE_THRESHOLD, perc_identity=HSP_THRESHOLD)
     stdout, stderr = blastn_cline()
 
-def create_blastn_object(query_genes, database, out_file):
+def create_blastn_object(query_genes, database, out_file, type=False):
     """ Return a blastn object with initialized blast_records and hsp_records
 
     :param query_genes: A fasta file that contains the query genes that are being searched in the database
@@ -39,14 +50,13 @@ def create_blastn_object(query_genes, database, out_file):
     :return: Blastn object
     """
     blastn_object = Blastn()
-    blastn_query(query_genes, database, out_file)
+    blastn_query(query_genes, database, out_file, type)
     blastn_object.create_blast_records(out_file)
     #changed!!!
     blastn_object.create_hsp_objects(query_genes)
     # blastn_object.create_hsp_records(query_genes)
     return blastn_object
 
-#changed!!!
 # def create_hsp_objects(blastn_object):
 #     """ Creates and initializes all fields of hsp objects from blastn_object input
 #
@@ -85,7 +95,7 @@ def create_blastn_object(query_genes, database, out_file):
 #     print('hsp objects', hsp_objects)
 #     return hsp_objects
 
-def valid_strands(first_hsp_object, second_hsp_object):
+def valid_strands(first_hsp_object: HSP, second_hsp_object: HSP) -> None :
     """ Assigns valid attributes to first and second hsp object and modifies lo_first and lo_second hsp objects s.t. they only contain strands with the correct orientation to one another.
 
     :param first_hsp_object: A HSP object to compare with second_hsp_object
@@ -251,38 +261,81 @@ def valid_dir(lo_hsps):
     :return: None
     """
 
-    # valid_lo_hsps = [hsp for hsp in lo_hsps if (hsp.end == hsp.query_end or hsp.start == hsp.query_start)
-    #                     and not (hsp.end == hsp.query_end and hsp.start == hsp.query_start)]
+    #REMEMBER: if the hsp is on the lagging strand, end will be at the beginning of the strand
+    # for hsp in lo_hsps:
+    #     # considers the case where the entire strand is found
+    #     print('contig', hsp.contig_name)
+    #     print('end', hsp.end)
+    #     print('start', hsp.start)
+    #     print('strand', hsp.strand)
+    #     print('sbjct', hsp.sbjct)
+    #     print('len sbjct', len(hsp.sbjct))
+    #     print('db length', hsp.db_length)
+    #     print('diff', abs(hsp.end - hsp.db_length))
+    #     #not covering the entire gene
+    #     if hsp.strand == True:
+    #         if not abs(hsp.end - hsp.db_length) <= VALID_DIR_THRESHOLD and not hsp.start <= VALID_DIR_THRESHOLD:
+    #             #TODO: ensure if the sequence is on the lagging strand that this is still the case
+    #             #the hsp is not facing the end of the contig
+    #             if not abs(hsp.end - hsp.db_length) <= VALID_DIR_THRESHOLD:
+    #                 print('result diff', abs(hsp.end - hsp.db_length))
+    #                 print('valid dir thres', VALID_DIR_THRESHOLD)
+    #                 print('contig name', hsp.contig_name)
+    #                 lo_hsps.remove(hsp)
+    #     elif hsp.strand == False:
+    #         if not abs(hsp.start - hsp.db_length) <= VALID_DIR_THRESHOLD and not hsp.end <= VALID_DIR_THRESHOLD:
+    #             if not abs(hsp.start - hsp.db_length) <= VALID_DIR_THRESHOLD:
+    #                 print('result diff', abs(hsp.start - hsp.db_length))
+    #                 print('valid dir thres', VALID_DIR_THRESHOLD)
+    #                 print('contig name', hsp.contig_name)
+    #                 lo_hsps.remove(hsp)
 
-
+    #TODO: FIX ME!!!!
+    # REMEMBER: if the hsp is on the lagging strand, end will be at the beginning of the strand
     for hsp in lo_hsps:
         # considers the case where the entire strand is found
-        if (hsp.end == hsp.query_end or hsp.start == hsp.query_start) and not (hsp.end == hsp.query_end and hsp.start == hsp.query_start):
-            if hsp.strand == False and abs(hsp.query_end - hsp.end) <= VALID_DIR_THRESHOLD:
+        if not hsp.end - len(hsp.sbjct) <= VALID_DIR_THRESHOLD and not hsp.start <= VALID_DIR_THRESHOLD:
+            # the the hsp is not facing the end of the contig
+            # TODO: ensure if the sequence is on the lagging strand that this is still the case
+            if not abs(hsp.end - len(hsp.sbjct)) <= VALID_DIR_THRESHOLD:
                 lo_hsps.remove(hsp)
-            elif hsp.strand == True and abs(hsp.start - hsp.query_start) <= VALID_DIR_THRESHOLD:
-                lo_hsps.remove(hsp)
+
+
+
+            # for hsp in lo_hsps:
+    #     # considers the case where the entire strand is found
+    #     if (hsp.end == hsp.query_end or hsp.start == hsp.query_start) and not (hsp.end == hsp.query_end and hsp.start == hsp.query_start):
+    #         #Need to consider bp's that are removed here!!!
+    #         if hsp.strand == False and abs(hsp.query_end - hsp.end) <= VALID_DIR_THRESHOLD:
+    #             lo_hsps.remove(hsp)
+    #         elif hsp.strand == True and abs(hsp.start - hsp.query_start) <= VALID_DIR_THRESHOLD:
+    #             lo_hsps.remove(hsp)
 
 #NOTE: f_object.name == r_object.name
 #TODO: consider case with cj1134 and cj1324!!!
 #TODO: This assumes that it would be highly unlikely that a gene will be found of long enough length on a database more than once!!!
-#TODO: possibly just consider if you found it on one primer in the right direction and do not even consider both found??
-def entire_gene(blast_object, reference_object, f_primers, r_primers):
+def entire_gene(blast_object:Blastn, reference_object:HSP, f_primers_dict:dict, r_primers_dict:dict) -> list:
     """ Return the hsp objects from the same blast record query as reference_object that are of proper orientation and long enough length to be considered found.
 
     :param blast_object: A Blastn object with all fields initialized
     :param reference_object: A HSP object
-    :param f_primers: A dictionary containing full forward primer sequences.
-    :param r_primers: A dictionary containing full reverse primer sequences.
+    :param f_primers_dict: A dictionary containing full forward primer sequences.
+    :param r_primers_dict: A dictionary containing full reverse primer sequences.
     :restrictions: Does not consider the case where lo_hsps has > 2 elements
     #TODO: It would be highly unlikely that a gene will be found of long enough length on a database more than once?
     :return: List of hsp objects
     """
+    # print('hsp objects', blast_object.hsp_objects)
+    # for hsp in blast_object.hsp_objects:
+    #     if reference_object.name in hsp.name:
+    #         print(hsp.name)
+    #         print(hsp.length)
 
     reference_list = [hsp for hsp in blast_object.hsp_objects if reference_object.name in hsp.name and not hsp.length <= CUTOFF_GENE_LENGTH]
-    #consider % identity?
+    print('ref list 1', reference_list)
     assert len(reference_list) < 3 #Deal with this case later if needed
     valid_dir(reference_list)
+    print('ref list 2', reference_list)
     if len(reference_list) == 1:
         print("only one primer found for", reference_list[0].name, "on", reference_list[0].contig_name)
     return reference_list
@@ -322,9 +375,15 @@ def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file,
     """
 
     #TODO: should forward and reverse blast have contents when looking for entire gene?! Write tests for it!
-    forward_blast = create_blastn_object(forward_primers, database, forward_out_file)
-    reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file)
+    print('forward')
+    forward_blast = create_blastn_object(forward_primers, database, forward_out_file, True)
+    print(forward_blast)
+    print('reverse')
+    reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file, True)
+    print(reverse_blast)
+    print('full')
     blast_object = create_blastn_object(amplicon_sequences, database, full_out_file)
+    print(blast_object)
 
     lo_queries = []
     dict_f_primers = create_primer_dict(forward_primers)
@@ -332,30 +391,37 @@ def pcr_prediction(forward_primers, reverse_primers, database, forward_out_file,
 
     lo_tup_same_queries = [(f_hsp, r_hsp) for f_hsp in forward_blast.hsp_objects for r_hsp in reverse_blast.hsp_objects if f_hsp.name == r_hsp.name]
     lo_tup_pcr_directly = [tup for tup in lo_tup_same_queries if tup[0].contig_name == tup[1].contig_name]
+    print(lo_tup_pcr_directly)
     lo_tup_entire_gene = [tup for tup in lo_tup_same_queries if tup not in lo_tup_pcr_directly] #primers located on different contigs
 
+    # #TODO: test me!!!
+    # try:
+    #     lo_forward_entire_gene, lo_reverse_entire_gene = zip(*lo_tup_entire_gene)
+    # except ValueError:
+    #     lo_forward_entire_gene = []
+    #     lo_reverse_entire_gene = []
+    #
+    # f_hsp_single_primers = (hsp for hsp in forward_blast.hsp_objects if hsp not in lo_forward_entire_gene)
+    # r_hsp_single_primers = (hsp for hsp in reverse_blast.hsp_objects if hsp not in lo_reverse_entire_gene)
+    # lo_combined = list(itertools.chain(f_hsp_single_primers, r_hsp_single_primers, lo_forward_entire_gene))
+
+    #TODO: change entire_gene and pcr_directly to return the same type of value
     for f_r_hsp_object in lo_tup_pcr_directly:
         if pcr_directly(f_r_hsp_object[0], f_r_hsp_object[1], amplicon_sequences, dict_f_primers, dict_r_primers):
             lo_queries.append(list(f_r_hsp_object)) #TODO: change later to keep as tuple and possibly return hash
 
+    #f_r_hsp_object should not have duplicates when primer is on both contigs!!! only send the reference object once!!!
+    #TODO: call entire gene using primers from lo_tup_pcr_directly!!! Add lo_tup_pcr_directly
     for f_r_hsp_object in lo_tup_entire_gene:
         lo_hsps = entire_gene(blast_object, f_r_hsp_object[1], dict_f_primers, dict_r_primers)
         if len(lo_hsps) > 0:
             lo_queries.append(lo_hsps)
 
-    # for f_hsp_object in forward_blast.hsp_objects:
-    #     lo_r_same_query = [r_hsp for r_hsp in reverse_blast.hsp_objects if r_hsp.name == f_hsp_object.name]
-    #     lo_r_pcr_directly = [r_hsp for r_hsp in lo_r_same_query if f_hsp_object.contig_name == r_hsp.contig_name] #from same query and on same contig
-    #     lo_r_entire_gene = [hsp for hsp in lo_r_same_query if hsp not in lo_r_pcr_directly] #from same query and on different contigs
-    #     for r_hsp_object in lo_r_pcr_directly:
-    #         if pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, dict_f_primers, dict_r_primers):
-    #             lo_f_r = [f_hsp_object, r_hsp_object]
-    #             lo_queries.append(lo_f_r)
-    #     for r_hsp_object in lo_r_entire_gene:
-    #         lo_tmp = entire_gene(blast_object, r_hsp_object, dict_f_primers, dict_r_primers)
-    #         if len(lo_tmp) > 0:
-    #             lo_queries.append(lo_tmp)
-
+    print(lo_queries)
+    print(len(lo_queries))
+    for lo_hsps in lo_queries:
+        for hsp in lo_hsps:
+            print(hsp.name)
 
     return lo_queries
 
@@ -384,15 +450,22 @@ def main(db_directory, forward_primers, reverse_primers, amplicon_sequences):
 
     pcr_predictions_dict = {}
     for file_path in files_paths:
-        print('FILE!!!')
+        print('FILE!!!', file_path)
         name = file_path.partition(db_directory + "/")[2]
         f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
         r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
         full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
+
+        # file_path = "/home/sfisher/Sequences/11168_complete_genome.fasta"
+        # f_out_file_path = "/home/sfisher/Sequences/11168_f_out_file.xml"
+        # r_out_file_path = "/home/sfisher/Sequences/11168_r_out_file.xml"
+        # full_out_file_path = "/home/sfisher/Sequences/11168_full_out_file.xml"
+        # name = "11168"
+
         result = pcr_prediction(forward_primers, reverse_primers, file_path, f_out_file_path, r_out_file_path, amplicon_sequences, full_out_file_path)
         pcr_predictions_dict[name] = result
 
-    print('pcr predictions dict', pcr_predictions_dict)
+    print(len(pcr_predictions_dict))
     return(pcr_predictions_dict)
 
 
@@ -404,7 +477,11 @@ if __name__ == "__main__":
     test_pcr_prediction = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction"
     test_bp_removed = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
     test_gene_annotation = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-    main(test_pcr_prediction, forward_primers, reverse_primers, amplicon_sequences)
+    test_contig_trunc = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
+    test_valid_dir = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
+    test_11168 = "/home/sfisher/Sequences/11168_complete_genome"
+    main(test_11168, forward_primers, reverse_primers, amplicon_sequences)
+
 
 
 
