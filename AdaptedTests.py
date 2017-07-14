@@ -3,11 +3,12 @@ from HSP import HSP
 import os
 import errno
 
-import PCRPrediction
+import CGFPrediction
 
 HSP_THRESHOLD = 0.9
 E_VALUE_THRESHOLD = 0.04
 CUTOFF_GENE_LENGTH = 60
+#CHANGED CUTOFF_GENE_LENGTH IN PCRPREDICTION TO 70
 
     #Files available that will probably not be used
     # database = "/home/sfisher/Documents/example_genomes/complete/IA3902.fasta"  # contains id and a complete genome sequence
@@ -21,7 +22,7 @@ class TestWithAmp(unittest.TestCase):
 
     # @classmethod
     # def setUpClass(cls):
-        #tODO?
+    #tODO?
 
     def test_create_blastn_object(self):
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
@@ -47,9 +48,9 @@ class TestWithAmp(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             self.assertEqual(len(forward_blast_object.blast_records), 40)
             self.assertEqual(len(reverse_blast_object.blast_records), 40)
@@ -79,9 +80,9 @@ class TestWithAmp(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             print(file_path)
 
@@ -144,12 +145,12 @@ class TestWithAmp(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
-            f_primer_dict = PCRPrediction.create_primer_dict(forward_primers)
-            r_primer_dict = PCRPrediction.create_primer_dict(reverse_primers)
+            f_primer_dict = CGFPrediction.create_primer_dict(forward_primers)
+            r_primer_dict = CGFPrediction.create_primer_dict(reverse_primers)
 
             if "contig" not in file_path:
                 if "cj0008" in file_path:
@@ -159,7 +160,7 @@ class TestWithAmp(unittest.TestCase):
                     # self.assertEqual(len(r_hsp_cj0008), 1)
                     for f_hsp_object in forward_blast_object.hsp_objects:
                         for r_hsp_object in reverse_blast_object.hsp_objects:
-                            result = PCRPrediction.pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
+                            result = CGFPrediction.pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
                             if f_hsp_object.length == 20 and r_hsp_object.length == 22:
                                 self.assertTrue(result)
                             else:
@@ -167,7 +168,7 @@ class TestWithAmp(unittest.TestCase):
                 elif "cj0483_complete" in file_path:
                     for f_hsp_object in forward_blast_object.hsp_objects:
                         for r_hsp_object in reverse_blast_object.hsp_objects:
-                            result = PCRPrediction.pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
+                            result = CGFPrediction.pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
                             if f_hsp_object.length == 20 and r_hsp_object.length == 21:
                                 self.assertTrue(result)
                             else:
@@ -181,8 +182,8 @@ class TestWithAmp(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_perfect_hit"
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
-        f_primer_dict = PCRPrediction.create_primer_dict(forward_primers)
-        r_primer_dict = PCRPrediction.create_primer_dict(reverse_primers)
+        f_primer_dict = CGFPrediction.create_primer_dict(forward_primers)
+        r_primer_dict = CGFPrediction.create_primer_dict(reverse_primers)
 
         files_paths = []
         for file in files:
@@ -199,13 +200,13 @@ class TestWithAmp(unittest.TestCase):
         for file_path in files_paths:
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             count = 0
             if "contig" in file_path: #Assuming not the case where both primers are located on the same contig
                 self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
                 for hsp in full_blast_object.hsp_objects:
-                    results = PCRPrediction.entire_gene(full_blast_object, hsp, f_primer_dict, r_primer_dict)
+                    results = CGFPrediction.entire_gene(full_blast_object, hsp, f_primer_dict, r_primer_dict)
                     print('hsp name', hsp.name)
                     if "cj0483" in hsp.name:
                         print('...', count)
@@ -282,9 +283,9 @@ class TestGeneAnnotationError(unittest.TestCase):
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
             objects = []
             objects.append(forward_blast_object)
             file_paths_dict[file_path] = objects
@@ -301,8 +302,8 @@ class TestGeneAnnotationError(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-        f_primers_dict = PCRPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = PCRPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
+        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
 
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -323,14 +324,14 @@ class TestGeneAnnotationError(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             for f_hsp in forward_blast_object.hsp_objects:
                 r_hsps = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.contig_name == f_hsp.contig_name and hsp.name == f_hsp.name]
                 for r_hsp in r_hsps:
                     count += 1
-                    result = PCRPrediction.pcr_directly(f_hsp, r_hsp, amplicon_sequences, f_primers_dict, r_primers_dict)
+                    result = CGFPrediction.pcr_directly(f_hsp, r_hsp, amplicon_sequences, f_primers_dict, r_primers_dict)
                     self.assertEqual(result, True)
         self.assertEqual(count, 2)
 
@@ -339,8 +340,8 @@ class TestGeneAnnotationError(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-        f_primers_dict = PCRPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = PCRPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
+        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
 
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -359,11 +360,11 @@ class TestGeneAnnotationError(unittest.TestCase):
         for file_path in files_paths:
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             for hsp in full_blast_object.hsp_objects:
                 if "NODE" in hsp.contig_name:
-                    results = PCRPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
+                    results = CGFPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
                     for result in results:
                         self.assertFalse(result.snp)
 
@@ -372,8 +373,8 @@ class TestGeneAnnotationError(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-        f_primers_dict = PCRPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = PCRPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
+        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
 
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -392,13 +393,13 @@ class TestGeneAnnotationError(unittest.TestCase):
         for file_path in files_paths:
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
             if "contig" in file_path:
                 self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
 
                 count = 0
                 for hsp in full_blast_object.hsp_objects:
-                    lo_result = PCRPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
+                    lo_result = CGFPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
 
                     if "cj1134" in hsp.name and "cj1134" in file_path:
                         count += 1
@@ -417,7 +418,7 @@ class TestGeneAnnotationError(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-        dict_predictions = PCRPrediction.main("/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error", forward_primers, reverse_primers, amplicon_sequences)
+        dict_predictions = CGFPrediction.main("/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error", forward_primers, reverse_primers, amplicon_sequences)
 
         for pred in dict_predictions:
             self.assertEqual(len(dict_predictions[pred]), 1)
@@ -432,8 +433,8 @@ class TestSNPPrimers(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp"
-        f_primer_dict = PCRPrediction.create_primer_dict(forward_primers)
-        r_primer_dict = PCRPrediction.create_primer_dict(reverse_primers)
+        f_primer_dict = CGFPrediction.create_primer_dict(forward_primers)
+        r_primer_dict = CGFPrediction.create_primer_dict(reverse_primers)
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
         files_paths = []
@@ -453,41 +454,41 @@ class TestSNPPrimers(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             if "6" in file_path:
                 self.assertGreaterEqual(len(forward_blast_object.hsp_objects), 1)
                 self.assertGreaterEqual(len(reverse_blast_object.hsp_objects), 1)
                 for hsp in forward_blast_object.hsp_objects:
                     self.assertIsNone(hsp.snp)
-                    PCRPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
+                    CGFPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
                     self.assertFalse(hsp.snp)
                 for hsp in reverse_blast_object.hsp_objects:
                     self.assertIsNone(hsp.snp)
-                    PCRPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
+                    CGFPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
                     self.assertFalse(hsp.snp)
             else:
                 for hsp in forward_blast_object.hsp_objects:
                     self.assertIsNone(hsp.snp)
-                    PCRPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
+                    CGFPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
                     self.assertTrue(hsp.snp)
                 if "fw" in file_path:
                     for hsp in reverse_blast_object.hsp_objects:
                         self.assertIsNone(hsp.snp)
-                        PCRPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
+                        CGFPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
                         self.assertFalse(hsp.snp)
                 else:
                     for hsp in reverse_blast_object.hsp_objects:
                         self.assertIsNone(hsp.snp)
-                        PCRPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
+                        CGFPrediction.is_snp_primer_search(hsp, f_primer_dict, r_primer_dict)
                         self.assertTrue(hsp.snp)
 
     def test_pcr_prediction_snp(self):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-        dict_predictions = PCRPrediction.main("/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp", forward_primers, reverse_primers, amplicon_sequences)
+        dict_predictions = CGFPrediction.main("/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp", forward_primers, reverse_primers, amplicon_sequences)
 
 
         predictions_ws = [pred for pred in dict_predictions if "_1" in pred or "_5" in pred]
@@ -682,7 +683,7 @@ class TestContigTrunc(unittest.TestCase):
             print(file_path)
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path, False)
+            blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path, False)
             self.assertGreaterEqual(len(blast_object.blast_records), 40)
             self.assertGreaterEqual(len(blast_object.hsp_objects), 2)
 
@@ -712,9 +713,9 @@ class TestContigTrunc(unittest.TestCase):
 #         self.assertGreaterEqual(len(self._blast_object_complete.hsp_objects), 1)
 #
 #         for hsp in self._blast_object_complete.hsp_objects:
-#             self.assertLessEqual(HSP_THRESHOLD, (hsp.identities / 612))
+#             self.assertLessEqual(PERC_ID_THRESH, (hsp.identities / 612))
 #
-#     # # complete amp, random bp removed < % identities, pass when HSP_THRESHOLD >= 0.9
+#     # # complete amp, random bp removed < % identities, pass when PERC_ID_THRESH >= 0.9
 #     # # 306 bp on each contig,
 #     # def test_create_hsp_records_low_perc_identities(self):
 #     #
@@ -748,7 +749,7 @@ class TestContigTrunc(unittest.TestCase):
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
             forward_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             reverse_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            hsp_predictions = PCRPrediction.pcr_prediction(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
+            hsp_predictions = CGFPrediction.pcr_prediction(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
 
             if "61" in file_path or "306" in file_path:
                 self.assertEqual(len(hsp_predictions), 1)
@@ -762,9 +763,9 @@ class TestContigTrunc(unittest.TestCase):
     def test_entire_gene(self):
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
-        f_primers_dict = PCRPrediction.create_primer_dict(f_primers)
+        f_primers_dict = CGFPrediction.create_primer_dict(f_primers)
         r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
-        r_primers_dict = PCRPrediction.create_primer_dict(r_primers)
+        r_primers_dict = CGFPrediction.create_primer_dict(r_primers)
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -783,12 +784,12 @@ class TestContigTrunc(unittest.TestCase):
         for file_path in files_paths:
             name = file_path.partition(db_directory + "/")[2]
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
-            full_blast_object = PCRPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
+            full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
             self.assertGreaterEqual(len(full_blast_object.hsp_objects), 2)
             count = 0
             for hsp in full_blast_object.hsp_objects:
-                entire_gene_result = PCRPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
+                entire_gene_result = CGFPrediction.entire_gene(full_blast_object, hsp, f_primers_dict, r_primers_dict)
 
                 if "61" in file_path or "306" in file_path:
                     if "cj0483" in hsp.name:
@@ -973,7 +974,7 @@ class TestContigTrunc(unittest.TestCase):
     #         self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_objects), 1)
     #
     #         for hsp in self._blast_obj_61_mystery.hsp_objects:
-    #             self.assertTrue(HSP_THRESHOLD <= hsp.identities / 61)
+    #             self.assertTrue(PERC_ID_THRESH <= hsp.identities / 61)
     #
     #         for hsp_object in self._blast_obj_61_mystery.hsp_objects:
     #             # tests name
@@ -1022,7 +1023,7 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 1)
         self.assertEqual(len(r_hsp_objects), 1)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
+        CGFPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertTrue(f_hsp_object.valid)
         self.assertTrue(r_hsp_object.valid)
 
@@ -1037,7 +1038,7 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 1)
         self.assertEqual(len(r_hsp_objects), 1)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
+        CGFPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertTrue(f_hsp_object.valid)
         self.assertTrue(r_hsp_object.valid)
 
@@ -1052,7 +1053,7 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 1)
         self.assertEqual(len(r_hsp_objects), 1)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
+        CGFPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertFalse(f_hsp_object.valid)
         self.assertFalse(r_hsp_object.valid)
 
@@ -1068,7 +1069,7 @@ class TestPCRDirectly(unittest.TestCase):
         self.assertEqual(len(f_hsp_objects), 2)
         self.assertEqual(len(r_hsp_objects), 2)
 
-        PCRPrediction.valid_strands(f_hsp_object, r_hsp_object)
+        CGFPrediction.valid_strands(f_hsp_object, r_hsp_object)
         self.assertFalse(f_hsp_object.valid)
         self.assertFalse(r_hsp_object.valid)
 
@@ -1096,15 +1097,15 @@ class TestPCRDirectly(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             for f_hsp_object in forward_blast_object.hsp_objects:
                 r_objects = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.name in f_hsp_object.name]
                 # f_hsp_object and r_hsp_object should be on the same contig
                 for object in r_objects:
                     self.assertEqual(f_hsp_object.contig_name, object.contig_name)
-                    distance = PCRPrediction.is_distance(f_hsp_object, object, amplicon_sequences)
+                    distance = CGFPrediction.is_distance(f_hsp_object, object, amplicon_sequences)
                     if "_51" in file_path:
                         self.assertFalse(distance)
                     else:
@@ -1116,8 +1117,8 @@ class TestPCRDirectly(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_db"
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
-        f_primers_dict = PCRPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = PCRPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
+        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
 
         files_paths = []
         for file in files:
@@ -1135,21 +1136,21 @@ class TestPCRDirectly(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             for f_hsp_object in forward_blast_object.hsp_objects:
                 r_objects = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.name in f_hsp_object.name]
                 # f_hsp_object and r_hsp_object should be on the same contig
                 for r_object in r_objects:
-                    if PCRPrediction.pcr_directly(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict):
+                    if CGFPrediction.pcr_directly(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict):
                         self.assertEqual(f_hsp_object.contig_name, r_object.contig_name)
                         f_hsp_object.snp = None
                         r_object.snp = None
-                        PCRPrediction.is_snp_primer_search(f_hsp_object, f_primers_dict, r_primers_dict)
+                        CGFPrediction.is_snp_primer_search(f_hsp_object, f_primers_dict, r_primers_dict)
                         self.assertIsNone(r_object.snp)
                         self.assertFalse(f_hsp_object.snp)
-                        PCRPrediction.is_snp_primer_search(r_object, f_primers_dict, r_primers_dict)
+                        CGFPrediction.is_snp_primer_search(r_object, f_primers_dict, r_primers_dict)
                         self.assertFalse(r_object.snp)
 
     def test_pcr_directly(self):
@@ -1176,8 +1177,8 @@ class TestPCRDirectly(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             self.assertGreater(len(forward_blast_object.hsp_objects), 0)
             for f_hsp_object in forward_blast_object.hsp_objects:
@@ -1188,9 +1189,9 @@ class TestPCRDirectly(unittest.TestCase):
                     if f_hsp_object.contig_name == r_object.contig_name:
                         # f_hsp_object and r_hsp_object should be on the same contig
                         self.assertEqual(f_hsp_object.contig_name, r_object.contig_name)
-                        f_primers_dict = PCRPrediction.create_primer_dict(forward_primers)
-                        r_primers_dict = PCRPrediction.create_primer_dict(reverse_primers)
-                        val = PCRPrediction.pcr_directly(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict)
+                        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
+                        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
+                        val = CGFPrediction.pcr_directly(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict)
                         if "_51" in file_path:
                             self.assertFalse(val)
                         else:
@@ -1201,7 +1202,7 @@ class TestPCRDirectly(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # contains primer id's and primer sequences
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-        dict_predictions = PCRPrediction.main(db, forward_primers, reverse_primers, amplicon_sequences)
+        dict_predictions = CGFPrediction.main(db, forward_primers, reverse_primers, amplicon_sequences)
 
         predictions_fail = [pred for pred in dict_predictions if "_51" in pred]
         predictions = [pred for pred in dict_predictions if pred not in predictions_fail]
@@ -1234,7 +1235,7 @@ class TestPCRPrediction(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
 
-        dict_predictions = PCRPrediction.main(db, forward_primers, reverse_primers,amplicon_sequences)
+        dict_predictions = CGFPrediction.main(db, forward_primers, reverse_primers, amplicon_sequences)
 
         predictions_fail = [pred for pred in dict_predictions if "_fail" in pred]
         predictions = [pred for pred in dict_predictions if pred not in predictions_fail]
@@ -1271,8 +1272,8 @@ class TestBPRemoved(unittest.TestCase):
             name = file_path.partition(db_directory + "/")[2]
             f_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             r_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            forward_blast_object = PCRPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
-            reverse_blast_object = PCRPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
+            forward_blast_object = CGFPrediction.create_blastn_object(forward_primers, file_path, f_out_file_path, True)
+            reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
 
             if "_ws" in file_path: #"ws"
                 # self.assertEqual(len(forward_blast_object.hsp_objects), 0) #hsp objects are added but are of too short length
@@ -1338,7 +1339,7 @@ class TestBPRemoved(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
-        dict_predictions = PCRPrediction.main(db_directory, forward_primers, reverse_primers, amplicon_sequences)
+        dict_predictions = CGFPrediction.main(db_directory, forward_primers, reverse_primers, amplicon_sequences)
 
         predictions_ws = [pred for pred in dict_predictions if "_ws" in pred]
         predictions = [pred for pred in dict_predictions if pred not in predictions_ws]
