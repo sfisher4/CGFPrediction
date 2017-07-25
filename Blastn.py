@@ -44,7 +44,7 @@ class Blastn(object):
     #         for alignment in blast_record.alignments:
     #             for gene in SeqIO.parse(query_genes, "fasta"):
     #                 if blast_record.query in gene.name:
-    #                     lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_THRESH <= (hsp.identities / min(len(gene.seq), alignment.length))] #len(gene.seq) for primers and alignment.length for entire gene search
+    #                     lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_CUTOFF <= (hsp.identities / min(len(gene.seq), alignment.length))] #len(gene.seq) for primers and alignment.length for entire gene search
     #                     if (len(lo_hsp) != 0):  # lo_hsp is not empty
     #                         dict_hsp[alignment] = lo_hsp
     #     for x in dict_hsp:
@@ -58,18 +58,16 @@ class Blastn(object):
         :param blastn_object: A Blastn Object
         :return: List of HSP Objects
         """
-        #TODO: make a dict?
         hsp_objects = []
         dict_hsp = {}
 
         for blast_record in self.blast_records:
             for alignment in blast_record.alignments:
-                #TODO: list comp
-                # lo_same_query = [gene for gene in SeqIO.parse(query_genes, "fasta") if blast_record.query in gene.name]
                 for gene in SeqIO.parse(query_genes, "fasta"):
                     if blast_record.query in gene.name:
                         # % identities
                         # for hsp in alignment.hsps:
+                        #     print(blast_record.query)
                         #     print(hsp.identities)
                         #     print(abs(hsp.sbjct_end - hsp.sbjct_start) + 1)
                         #     print(alignment.length)
@@ -79,15 +77,16 @@ class Blastn(object):
                         # used to be alignment.length but switched to the length of the hsp!!!
                         # changed it so that I am comparing to the hsp length rather than the entire length of the contig!
                         # I consider if it should be found based off of the entire length of the hsp found in entire_gene!
-                        # lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_THRESH <= (hsp.identities / min(len(gene.seq), abs(hsp.sbjct_start - hsp.sbjct_end) + 1))]
-                        # lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_THRESH <= (hsp.identities / min(len(gene.seq), alignment.length))]
+                        # lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_CUTOFF <= (hsp.identities / min(len(gene.seq), abs(hsp.sbjct_start - hsp.sbjct_end) + 1))]
+                        # lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_CUTOFF <= (hsp.identities / min(len(gene.seq), alignment.length))]
                         #TODO: commented above code for % identity b/c I am restricting % identity in blastn instead!
                         lo_hsp = [hsp for hsp in alignment.hsps]
                         # print(lo_hsp)
                         dict_hsp[alignment] = lo_hsp
 
                 for hsp in dict_hsp[alignment]:
-                    # if hsp.expect < E_VALUE_THRESHOLD: #removed this check b/c passed evalue into blastn query
+
+                    # if hsp.expect < E_VALUE_CUTOFF: #removed this check b/c passed evalue into blastn query
                     hsp_name = blast_record.query
                     hsp_object = HSP(hsp_name)
                     hsp_object.start = hsp.sbjct_start
@@ -97,6 +96,7 @@ class Blastn(object):
                     hsp_object.alignment = alignment
                     hsp_object.contig_name = alignment.hit_def
                     hsp_object.length = abs(hsp_object.end - hsp_object.start) + 1
+                    hsp_object.query_length = abs(hsp.query_end - hsp.query_start) + 1
                     hsp_object.db_length = alignment.length
                     hsp_object.expect = hsp.expect
                     hsp_object.sbjct = hsp.sbjct

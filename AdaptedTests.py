@@ -713,9 +713,9 @@ class TestContigTrunc(unittest.TestCase):
 #         self.assertGreaterEqual(len(self._blast_object_complete.hsp_objects), 1)
 #
 #         for hsp in self._blast_object_complete.hsp_objects:
-#             self.assertLessEqual(PERC_ID_THRESH, (hsp.identities / 612))
+#             self.assertLessEqual(PERC_ID_CUTOFF, (hsp.identities / 612))
 #
-#     # # complete amp, random bp removed < % identities, pass when PERC_ID_THRESH >= 0.9
+#     # # complete amp, random bp removed < % identities, pass when PERC_ID_CUTOFF >= 0.9
 #     # # 306 bp on each contig,
 #     # def test_create_hsp_records_low_perc_identities(self):
 #     #
@@ -749,7 +749,7 @@ class TestContigTrunc(unittest.TestCase):
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
             forward_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             reverse_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            hsp_predictions = CGFPrediction.pcr_prediction(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
+            hsp_predictions = CGFPrediction.cgf_prediction(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
 
             if "61" in file_path or "306" in file_path:
                 self.assertEqual(len(hsp_predictions), 1)
@@ -974,7 +974,7 @@ class TestContigTrunc(unittest.TestCase):
     #         self.assertGreaterEqual(len(self._blast_obj_lead_end.hsp_objects), 1)
     #
     #         for hsp in self._blast_obj_61_mystery.hsp_objects:
-    #             self.assertTrue(PERC_ID_THRESH <= hsp.identities / 61)
+    #             self.assertTrue(PERC_ID_CUTOFF <= hsp.identities / 61)
     #
     #         for hsp_object in self._blast_obj_61_mystery.hsp_objects:
     #             # tests name
@@ -982,7 +982,7 @@ class TestContigTrunc(unittest.TestCase):
     #             # tests db_length
     #             self.assertEqual(hsp_object.db_length, 61)
     #             self.assertNotEqual(hsp_object.contig_name, "", 'hsp_object contig name is not initialized')
-    #             self.assertGreater(E_VALUE_THRESHOLD, hsp_object.expect)
+    #             self.assertGreater(E_VALUE_CUTOFF, hsp_object.expect)
     #             self.assertNotEqual(hsp_object.expect, -1)
     #             self.assertNotEqual(hsp_object.start, -1)
     #             self.assertNotEqual(hsp_object.end, -1)
@@ -995,7 +995,7 @@ class TestContigTrunc(unittest.TestCase):
     #             self.assertNotEqual(hsp_object.length, 0, "length of hsp is 0")
     #             self.assertEqual(hsp_object.length, abs(hsp_object.end - hsp_object.start) + 1)
     #             self.assertIsNone(hsp_object.valid)  # have not yet intialized valid (do in isValid function)
-    #             self.assertLess(hsp_object.expect, E_VALUE_THRESHOLD)
+    #             self.assertLess(hsp_object.expect, E_VALUE_CUTOFF)
     #
     # def test_one_primer_lead_end(self):
     #     name = "cj0483"
@@ -1217,9 +1217,9 @@ class TestPCRPrediction(unittest.TestCase):
 
     Information about files in test_pcr_prediction folder:
     #complete_primers = complete genome with 100% identity, valid strands and both primers found (pass)
-    #complete_primers_max_distance = complete genome with 50bp removed from middle, 100% identity, valid strands and both primers found #Should pass if MAX_DIST_BTWN_PRIMERS <= 50 (pass)
-    #complete_primers_short = complete genome with 51bp removed from middle, 100% identity, valid strands and both primers found #Should pass if MAX_DIST_BTWN_PRIMERS <= 50 (fail)
-    #complete_primers_invalid_strands = complete genome with 50bp removed from middle, 100% identity, invalid strands and both primers found #Should pass if MAX_DIST_BTWN_PRIMERS <= 50 (fail)
+    #complete_primers_max_distance = complete genome with 50bp removed from middle, 100% identity, valid strands and both primers found #Should pass if MAX_MARGIN_BTWN_PRIMERS <= 50 (pass)
+    #complete_primers_short = complete genome with 51bp removed from middle, 100% identity, valid strands and both primers found #Should pass if MAX_MARGIN_BTWN_PRIMERS <= 50 (fail)
+    #complete_primers_invalid_strands = complete genome with 50bp removed from middle, 100% identity, invalid strands and both primers found #Should pass if MAX_MARGIN_BTWN_PRIMERS <= 50 (fail)
     #one_contigs = 2 contigs with 100% identity on one contig (both primers on NODE_1) (pass)
     #db_name_different = 2 contigs wtih 100% identity on one contig (both primers on NODE_1) and an unknown name (sh0000) for db seq. (pass)
     #two_60bp_contigs = 2 contigs with 60bp, primer on different contigs, 100% identity. When CUTOFF_GENE_LENGTH >= 60, this should pass

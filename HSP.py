@@ -1,5 +1,6 @@
 
-class HSP(object):
+from Results import Results
+class HSP(Results):
     """A High Sequence Pair object from running blastn on two nucleotide sequences
 
     Attributes:
@@ -21,6 +22,7 @@ class HSP(object):
         gaps: Number of gaps in the hsp
     """
     def __init__(self, name):
+        super(HSP, self).__init__(name)
         self.name = name
         self.expect = -1
         self.start = -1 #not possible to have a start or end that starts at -1
@@ -28,18 +30,17 @@ class HSP(object):
         self.query_start = -1
         self.query_end = -1
         self.identities = -1
-        self.strand = None
         self.length = 0
-        self.valid = None
         self.db_length = 0
         self.contig_name = ""
-        self.snp = None
         self.sbjct = ""
         self.query = ""
         self.gaps = 0
 
+
     def set_name(self, name):
         self.name = name
+
 
 
 
