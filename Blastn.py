@@ -1,6 +1,7 @@
 from Bio.Blast import NCBIXML
 from Bio import SeqIO
 from HSP import HSP
+import io
 
 E_VALUE_THRESHOLD = 0.04 #TODO: determine an e-value threshold
 
@@ -20,37 +21,19 @@ class Blastn(object):
         # self.hsp_records = {}
         self.hsp_objects = []
 
-    def create_blast_records(self, str):
+    def create_blast_records(self, stdout_xml):
         """ Creates blast records for the Blastn object from xml file str.
 
         :param str: An xml file containing results from a Blastn query search.
         :return: None
         """
-        result_handle = open(str)
-        blast_records = NCBIXML.parse(result_handle)  # returns an iterator
+        # result_handle = open(xml_file)
+        # blast_records = NCBIXML.parse(stdout_xml)  # returns an iterator
+        blast_xml = io.StringIO(stdout_xml)
+        blast_records = NCBIXML.parse(blast_xml)
         self.blast_records = list(blast_records)
-        result_handle.close()
+        # result_handle.close()
 
-#changed!!!
-    # def create_hsp_records(self, query_genes):
-    #     """ Creates hsp records for the Blastn object from fasta file genes.
-    #
-    #     :param query_genes: A fasta file that contains query genes. Should be primers or amplicon sequences.
-    #     :return: None
-    #     """
-    #     dict_hsp = {}
-    #
-    #     for blast_record in self.blast_records:
-    #         for alignment in blast_record.alignments:
-    #             for gene in SeqIO.parse(query_genes, "fasta"):
-    #                 if blast_record.query in gene.name:
-    #                     lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_CUTOFF <= (hsp.identities / min(len(gene.seq), alignment.length))] #len(gene.seq) for primers and alignment.length for entire gene search
-    #                     if (len(lo_hsp) != 0):  # lo_hsp is not empty
-    #                         dict_hsp[alignment] = lo_hsp
-    #     for x in dict_hsp:
-    #         print('x', x)
-    #     print('dict hsp', dict_hsp)
-    #     self.hsp_records = dict_hsp
 
     def create_hsp_objects(self, query_genes):
         """ Creates and initializes all fields of hsp objects from blastn_object input
@@ -65,23 +48,7 @@ class Blastn(object):
             for alignment in blast_record.alignments:
                 for gene in SeqIO.parse(query_genes, "fasta"):
                     if blast_record.query in gene.name:
-                        # % identities
-                        # for hsp in alignment.hsps:
-                        #     print(blast_record.query)
-                        #     print(hsp.identities)
-                        #     print(abs(hsp.sbjct_end - hsp.sbjct_start) + 1)
-                        #     print(alignment.length)
-                        #     print(min(len(gene.seq), alignment.length))
-                        #     print(hsp.sbjct)
-                        #     print((hsp.identities / min(len(gene.seq), alignment.length)))
-                        # used to be alignment.length but switched to the length of the hsp!!!
-                        # changed it so that I am comparing to the hsp length rather than the entire length of the contig!
-                        # I consider if it should be found based off of the entire length of the hsp found in entire_gene!
-                        # lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_CUTOFF <= (hsp.identities / min(len(gene.seq), abs(hsp.sbjct_start - hsp.sbjct_end) + 1))]
-                        # lo_hsp = [hsp for hsp in alignment.hsps if PERC_ID_CUTOFF <= (hsp.identities / min(len(gene.seq), alignment.length))]
-                        #TODO: commented above code for % identity b/c I am restricting % identity in blastn instead!
                         lo_hsp = [hsp for hsp in alignment.hsps]
-                        # print(lo_hsp)
                         dict_hsp[alignment] = lo_hsp
 
                 for hsp in dict_hsp[alignment]:
@@ -103,6 +70,7 @@ class Blastn(object):
                     hsp_object.query = hsp.query
                     hsp_object.identities = hsp.identities
                     hsp_object.gaps = hsp.gaps
+                    hsp_object.bits = hsp.bits
 
                     # assuming no contigs (complete genome)
                     if hsp.sbjct_start < hsp.sbjct_end:

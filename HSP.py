@@ -36,7 +36,7 @@ class HSP(Results):
         self.sbjct = ""
         self.query = ""
         self.gaps = 0
-
+        self.duplicate = False
 
     def set_name(self, name):
         self.name = name
