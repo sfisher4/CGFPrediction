@@ -27,12 +27,11 @@ class Blastn(object):
         :param str: An xml file containing results from a Blastn query search.
         :return: None
         """
-        # result_handle = open(xml_file)
-        # blast_records = NCBIXML.parse(stdout_xml)  # returns an iterator
-        blast_xml = io.StringIO(stdout_xml)
-        blast_records = NCBIXML.parse(blast_xml)
-        self.blast_records = list(blast_records)
-        # result_handle.close()
+
+        with io.StringIO(stdout_xml) as blast_xml:
+            blast_records = NCBIXML.parse(blast_xml)
+            self.blast_records = list(blast_records)
+
 
 
     def create_hsp_objects(self, query_genes):
