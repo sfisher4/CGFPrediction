@@ -282,6 +282,14 @@ class MyTestCase(unittest.TestCase):
                      'cj1427c', 'cj1431c', 'cj1439', 'cj1550c', 'cj1551', 'cj1552', 'cj1585', 'cj1679', 'cj1721',
                      'cj1727c']
 
+        # bsr
+        f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
+        r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
+        amp_bs_dir = "/home/sfisher/Sequences/BSR/amp_seq/"
+        max_f_bits_dict = CGFPrediction.max_bs(f_bs_primer_dir)
+        max_r_bits_dict = CGFPrediction.max_bs(r_bs_primer_dir)
+        max_amp_bits_dict = CGFPrediction.max_bs(amp_bs_dir)
+
         file_gene_dict = {}
         for line in lines:
             genes_found_list = []
@@ -299,25 +307,13 @@ class MyTestCase(unittest.TestCase):
         for file in files:
             files_paths.append(os.path.abspath(db_directory) + '/' + file)
 
-        # create new folder for out files
-        try:
-            os.mkdir(db_directory + "/out_files")
-        except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise
-            pass
-
         for file_path in files_paths:
             print('FILE!!!', file_path)
             file_name = file_path.partition(db_directory + "/")[2]
             print(file_name)
-            f_out_file_path = db_directory + "/out_files/" + "f_" + file_name.replace("fasta", "xml")
-            r_out_file_path = db_directory + "/out_files/" + "r_" + file_name.replace("fasta", "xml")
-            full_out_file_path = db_directory + "/out_files/" + "full_" + file_name.replace("fasta", "xml")
 
-            cgf_predictions = CGFPrediction.cgf_prediction(forward_primers, reverse_primers, file_path, f_out_file_path,
-                                                           r_out_file_path,
-                                                           amplicon_sequences, full_out_file_path)
+            cgf_predictions = CGFPrediction.cgf_prediction(forward_primers, reverse_primers, file_path, amplicon_sequences,
+                                                           max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
             lo_predictions_names = []
             result = cgf_predictions[0]
             print('cgf predictions[0]', result)

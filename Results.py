@@ -1,4 +1,5 @@
 
+from memory_profiler import profile
 
 class Results:
     """
@@ -21,9 +22,9 @@ class Results:
         self.end_dist = -1
         # self.amp_found = False
         self.amp_len = -1
-        self.amp_query = ""
-        self.amp_sbjct = ""
-        self.bsr = 0
+        # self.amp_query = ""
+        # self.amp_sbjct = ""
+        self.bsr = -1
         self.partner = None
         #TODO: where is the snp?
 

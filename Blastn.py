@@ -32,8 +32,6 @@ class Blastn(object):
             blast_records = NCBIXML.parse(blast_xml)
             self.blast_records = list(blast_records)
 
-
-
     def create_hsp_objects(self, query_genes):
         """ Creates and initializes all fields of hsp objects from blastn_object input
 
@@ -66,7 +64,7 @@ class Blastn(object):
                     hsp_object.db_length = alignment.length
                     hsp_object.expect = hsp.expect
                     hsp_object.sbjct = hsp.sbjct
-                    hsp_object.query = hsp.query
+                    # hsp_object.query = hsp.query
                     hsp_object.identities = hsp.identities
                     hsp_object.gaps = hsp.gaps
                     hsp_object.bits = hsp.bits

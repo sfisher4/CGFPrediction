@@ -10,11 +10,11 @@ class MyTestCase(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-        db_directory = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
+        # db_directory = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
         # db_directory = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-        # db_directory = "/home/sfisher/Sequences/11168_test_files/memory_trial"
-        # file = open("/home/sfisher/Sequences/11168_test_files/memorial_trial_results.txt", "r")
-        file = open("/home/sfisher/Sequences/11168_test_files/cgf40_results_modified.txt", "r")
+        db_directory = "/home/sfisher/Sequences/11168_test_files/memory_trial_CI-5768"
+        file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
+        # file = open("/home/sfisher/Sequences/11168_test_files/cgf40_results_modified.txt", "r")
         # file = open("/home/sfisher/Sequences/11168_test_files/cgf_246_results_modified.txt", "r")
 
         # bsr
@@ -56,15 +56,14 @@ class MyTestCase(unittest.TestCase):
         for file_path in files_paths:
             file_name = file_path.partition(db_directory + "/")[2]
             print(file_name)
-            cgf_predictions = CGFPrediction.cgf_prediction_trial(forward_primers, reverse_primers, file_path,
+            cgf_predictions = CGFPrediction.cgf_prediction(forward_primers, reverse_primers, file_path,
                                                            amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
             cgf_predictions_dict = cgf_predictions[0]
             # print('dict', cgf_predictions_dict)
-            all_hsp_dict = cgf_predictions[1]
+            all_hsp_list = cgf_predictions[1]
 
             genes_expected = file_gene_dict[file_name]
             genes_found = [key for key in cgf_predictions_dict]
-
 
             false_positive = set(genes_found) - set(genes_expected)
             false_negative = set(genes_expected) - set(genes_found)
@@ -94,88 +93,88 @@ class MyTestCase(unittest.TestCase):
             for i in range(69, 139):
                 binary_tree_attrib.insert(i, None)
 
+            #TODO: possibly change all_hsp_list to a generator!!
             for gene_name in false_negative:
-                for hsp in all_hsp_dict[gene_name]:
-                    result = CGFPrediction.false_neg_pred(binary_tree_attrib, hsp, 0)
-                    print('bsr', hsp.bsr)
-                    if hsp.bsr < MIN_BSR:
-                        print(hsp.name, "on contig", hsp.contig_name, "failed because hsp bsr is", hsp.bsr)
-                    elif result == 2:
-                        print(hsp.name, "CASE 2")
-                        print('both primers found:', hsp.both_primers_found)
-                        print('ehybrid is:', hsp.ehybrid)
-                        print('query', hsp.query)
-                        print('sbjct', hsp.sbjct)
-                        print('amp query', hsp.amp_query)
-                        print('amp sbjct', hsp.amp_sbjct)
-                    elif result == 3:
-                        print(hsp.name, "CASE 3")
-                        print('both primers found:', hsp.both_primers_found, 'with contig', hsp.contig)
-                        print('ehybrid is:', hsp.ehybrid)
-                    elif result == 4:
-                        print(hsp.name, "on contig", hsp.contig_name, "CASE 4")
-                        print('both primers found:', hsp.both_primers_found, 'with contig', hsp.contig)
-                        print('ehybrid is:', hsp.ehybrid)
-                        print('query', hsp.query)
-                        print('sbjct', hsp.sbjct)
-                        print('partner', hsp.partner.name, hsp.partner.contig_name, hsp.partner.query)
-                    elif result == 6 or result == 8 or result == 10:
-                        print(hsp.name, "on contig", hsp.contig_name, "CASE 6 or 8 or 10")
-                        print('both primers found:', hsp.both_primers_found)
-                        print('ehybrid is:', hsp.ehybrid, 'with len', hsp.length)
-                        print('query', hsp.query)
-                        print('sbjct', hsp.sbjct)
-                        print('amp query', hsp.amp_query)
-                        print('amp sbjct', hsp.amp_sbjct)
-                    elif result == 11 or result == 15 or result == 137:
-                        print('FALSE')
-                    elif result == 12:
-                        print(hsp.name, "CASE 12")
-                        print('both primers found:', hsp.both_primers_found, 'with ehybrid', hsp.ehybrid, 'and location', hsp.location)
-                        if hsp.strand:
-                            print('leading strand', 'located', hsp.end_dist, 'from end')
-                        elif not hsp.strand:
-                            print('lagging strand', 'located,', hsp.end_dist, 'from end')
-                        print('query', hsp.query)
-                        print('sbjct', hsp.sbjct)
-                        print('amp query', hsp.amp_query)
-                        print('amp sbjct', hsp.amp_sbjct)
-                        print('Most likely too restrictive to find both primers...')
-                    elif result == 20:
-                        print(hsp.name, "on contig", hsp.contig_name, "CASE 20")
-                        print('both primers found:', hsp.both_primers_found, 'with contig:', hsp.contig, 'and location', hsp.location)
-                        if hsp.strand:
-                            print('leading strand', 'located', hsp.end_dist, 'from end')
-                            print('primer query:', hsp.query)
-                        elif not hsp.strand:
-                            print('lagging strand', 'located,', hsp.end_dist, 'from end')
-                        print('amp query', hsp.amp_query)
-                        print('amp sbjct', hsp.amp_sbjct)
-                        print('query    ', hsp.query)
-                    elif result == 34:
-                        print(hsp.name, "CASE 34")
-                        print('both primers found:', hsp.both_primers_found, 'with contig:', hsp.contig)
-                        print('invalid direction to other hsp')
-                    elif result == 67:
-                        print(hsp.name, "CASE 67")
-                        print('false b/c snp:', hsp.snp)
-                        print('sbjct', hsp.sbjct)
-                        print('query', hsp.query)
-                    elif result == 138:
-                        print(hsp.name, "CASE 138")
-                        print('false b/c dist btwn primers')
-                    else:
-                        assert False
-                    print('\n')
+                # for hsp in all_hsp_dict[gene_name]:
+                for hsp in all_hsp_list:
+                    if hsp.name in gene_name:
+                        result = CGFPrediction.false_neg_pred(binary_tree_attrib, hsp, 0)
+                        print('bsr', hsp.bsr)
+                        if hsp.bsr < MIN_BSR:
+                            print(hsp.name, "on contig", hsp.contig_name, "failed because hsp bsr is", hsp.bsr)
+                        elif result == 2:
+                            print(hsp.name, "CASE 2")
+                            print('both primers found:', hsp.both_primers_found)
+                            print('ehybrid is:', hsp.ehybrid)
+                            # print('query', hsp.query)
+                            print('sbjct', hsp.sbjct)
+                            # print('amp query', hsp.amp_query)
+                            # print('amp sbjct', hsp.amp_sbjct)
+                        elif result == 3:
+                            print(hsp.name, "CASE 3")
+                            print('both primers found:', hsp.both_primers_found, 'with contig', hsp.contig)
+                            print('ehybrid is:', hsp.ehybrid)
+                        elif result == 4:
+                            print(hsp.name, "on contig", hsp.contig_name, "CASE 4")
+                            print('both primers found:', hsp.both_primers_found, 'with contig', hsp.contig)
+                            print('ehybrid is:', hsp.ehybrid)
+                            # print('query', hsp.query)
+                            print('sbjct', hsp.sbjct)
+                            print('partner & partner sbjct', hsp.partner.name, hsp.partner.contig_name, hsp.partner.sbjct)
+                        elif result == 6 or result == 8 or result == 10:
+                            print(hsp.name, "on contig", hsp.contig_name, "CASE 6 or 8 or 10")
+                            print('both primers found:', hsp.both_primers_found)
+                            print('ehybrid is:', hsp.ehybrid, 'with len', hsp.length)
+                            # print('query', hsp.query)
+                            print('sbjct', hsp.sbjct)
+                            # print('amp query', hsp.amp_query)
+                            # print('amp sbjct', hsp.amp_sbjct)
+                        elif result == 11 or result == 15 or result == 137:
+                            print('FALSE')
+                        elif result == 12:
+                            print(hsp.name, "CASE 12")
+                            print('both primers found:', hsp.both_primers_found, 'with ehybrid', hsp.ehybrid, 'and location', hsp.location)
+                            if hsp.strand:
+                                print('leading strand', 'located', hsp.end_dist, 'from end')
+                            elif not hsp.strand:
+                                print('lagging strand', 'located,', hsp.end_dist, 'from end')
+                            # print('query', hsp.query)
+                            print('sbjct', hsp.sbjct)
+                            # print('amp query', hsp.amp_query)
+                            # print('amp sbjct', hsp.amp_sbjct)
+                            print('Most likely too restrictive to find both primers...')
+                        elif result == 20:
+                            print(hsp.name, "on contig", hsp.contig_name, "CASE 20")
+                            print('both primers found:', hsp.both_primers_found, 'with contig:', hsp.contig, 'and location', hsp.location)
+                            if hsp.strand:
+                                print('leading strand', 'located', hsp.end_dist, 'from end')
+                                # print('primer query:', hsp.query)
+                            elif not hsp.strand:
+                                print('lagging strand', 'located,', hsp.end_dist, 'from end')
+                            # print('amp query', hsp.amp_query)
+                            # print('amp sbjct', hsp.amp_sbjct)
+                            # print('query    ', hsp.query)
+                        elif result == 34:
+                            print(hsp.name, "CASE 34")
+                            print('both primers found:', hsp.both_primers_found, 'with contig:', hsp.contig)
+                            print('invalid direction to other hsp')
+                        elif result == 67:
+                            print(hsp.name, "CASE 67")
+                            print('false b/c snp:', hsp.snp)
+                            print('sbjct', hsp.sbjct)
+                            # print('query', hsp.query)
+                        elif result == 138:
+                            print(hsp.name, "CASE 138")
+                            print('false b/c dist btwn primers')
+                        else:
+                            assert False
+                        print('\n')
 
             for gene_name in false_positive:
                 for hsp in cgf_predictions_dict[gene_name]:
                     print(hsp.name)
                     print('strand', hsp.strand)
                     print('sbjct    ', hsp.sbjct)
-                    print('query    ', hsp.query)
-                    print('amp sbjct', hsp.amp_sbjct)
-                    print('amp query', hsp.amp_query)
                     print('\n')
 
 

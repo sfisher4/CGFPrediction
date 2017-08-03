@@ -1,5 +1,6 @@
 
 from Results import Results
+from memory_profiler import profile
 class HSP(Results):
     """A High Sequence Pair object from running blastn on two nucleotide sequences
 
@@ -34,7 +35,7 @@ class HSP(Results):
         self.db_length = 0
         self.contig_name = ""
         self.sbjct = ""
-        self.query = ""
+        # self.query = ""
         self.gaps = 0
         self.duplicate = False
 
