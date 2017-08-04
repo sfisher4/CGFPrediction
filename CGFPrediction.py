@@ -5,9 +5,7 @@ from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna
 from HSP import HSP
 import os
-import errno
 import itertools
-from itertools import permutations
 from collections import defaultdict
 import copy
 from math import floor
@@ -302,7 +300,7 @@ def bsr(blast_object:Blastn, max_bits_dict:dict):
             # print(hsp.bits / max_bits_dict[hsp.name])
             blast_object.hsp_objects.remove(hsp)
 
-def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r_primers, max_f_bits_dict, max_r_bits_dict):
+def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r_primers, max_f_bits_dict, max_r_bits_dict, debug):
     """
 
     :param lo_tup_same_contig:
@@ -321,6 +319,8 @@ def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r
 
     result_dict = defaultdict(list)
     epcr_only_dict = defaultdict(list)
+    if debug == True:
+        all_hsp = defaultdict(list)
 
     for tup in lo_tup_same_contig:
         f_hsp_old = tup[0]
@@ -382,17 +382,24 @@ def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r
         #     r_hsp_new = copy.deepcopy(r_hsp)
         #     all_hsp[f_hsp.name].append(f_hsp_new)
         #     all_hsp[r_hsp.name].append(r_hsp_new)
-        # all_hsp[f_hsp.name].append(f_hsp)
-        # all_hsp[r_hsp.name].append(r_hsp)
+        if debug == True:
+            all_hsp[f_hsp.name].append(f_hsp)
+            all_hsp[r_hsp.name].append(r_hsp)
 
-    return result_dict #, epcr_only_dict]
+    if debug == True:
+        return [result_dict, all_hsp] #, epcr_only_dict]
+    else:
+        return [result_dict]
 
 
-def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybrid_hsp_pass, ehybrid_hsp_fail):
+def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybrid_hsp_pass, ehybrid_hsp_fail, debug):
     # TODO: changed from lo_tup_diff_contig to lo_tup_diff_contig_not_found!!!
     # for tup in lo_tup_diff_contig:
     result_dict = defaultdict(list)
-    # all_hsp = defaultdict(list)
+
+    if debug == True:
+        all_hsp = defaultdict(list)
+
     for tup in lo_tup_diff_contig:
         f_hsp_old = tup[0]
         r_hsp_old = tup[1]
@@ -449,72 +456,22 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
                 # r_hsp.amp_query = hsp.query
 
                 # r_hsp_new = copy.deepcopy(r_hsp)
-        # all_hsp[r_hsp.name].append(r_hsp)
-        # all_hsp[f_hsp.name].append(f_hsp)
-    return result_dict
+        if debug == True:
+            all_hsp[r_hsp.name].append(r_hsp)
+            all_hsp[f_hsp.name].append(f_hsp)
 
-def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, max_f_bits_dict:dict, max_r_bits_dict:dict, max_amp_bits_dict:dict) -> list:
+    if debug == True:
+        return [result_dict, all_hsp]
+    else:
+        return [result_dict]
 
-    #TODO: make sure that after adding a hsp to the results list that if the hsp is modified in later fcns, it is not affected.
-
-    # forward_blast_bsr = create_blastn_object(forward_primers, database, forward_out_file, True)
-    # reverse_blast_bsr = create_blastn_object(reverse_primers, database, reverse_out_file, True)
-    forward_blast_bsr = create_blastn_bsr_object(forward_primers, database)
-    reverse_blast_bsr = create_blastn_bsr_object(reverse_primers, database)
-    bsr(forward_blast_bsr, max_f_bits_dict)
-    bsr(reverse_blast_bsr, max_r_bits_dict)
-    blast_object = create_blastn_object(amp_sequences, database)
-    full_blast_qcov = create_blastn_object(amp_sequences, database, True)
-    dict_f_primers = create_primer_dict(forward_primers)
-    dict_r_primers = create_primer_dict(reverse_primers)
-
-    # lo_tup_same_queries = match_primer_queries(forward_blast_bsr.hsp_objects, reverse_blast_bsr.hsp_objects)
-    lo_tup_same_queries = [(f_hsp,r_hsp) for f_hsp in forward_blast_bsr.hsp_objects for r_hsp in reverse_blast_bsr.hsp_objects if f_hsp.name == r_hsp.name]
-    print('lo_tup_same_queries')
-    lo_tup_same_contig = [tup for tup in lo_tup_same_queries if tup[0].contig_name == tup[1].contig_name]
-    # lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig]
-
-    #same contig prediction
-    result_dict_same_contig = same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r_primers, max_f_bits_dict, max_r_bits_dict)
-    print('same contig results', result_dict_same_contig)
-
-    #doesn't look for genes on different contigs if they were already found on same contig
-    lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig]
-    result_keys = [key for key,value in result_dict_same_contig.items()]
-    lo_tup_diff_contig_not_found = [tup for tup in lo_tup_diff_contig if tup[0].name not in result_keys]
-
-    try:
-        lo_f_primers, lo_r_primers = zip(*lo_tup_same_queries)
-    except ValueError:
-        lo_f_primers = []
-        lo_r_primers = []
-
-    f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp not in lo_f_primers]
-    r_hsp_single_primers = [hsp for hsp in reverse_blast_bsr.hsp_objects if hsp not in lo_r_primers]
-    #assigns bsr !!!
-    for f_hsp in f_hsp_single_primers:
-        f_hsp.bsr = f_hsp.bits / max_f_bits_dict[f_hsp.name]
-    for r_hsp in r_hsp_single_primers:
-        r_hsp.bsr = r_hsp.bits / max_r_bits_dict[r_hsp.name]
-    lo_hsp_single_primers = list(itertools.chain(f_hsp_single_primers, r_hsp_single_primers))
-
+def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fail, debug):
     result_dict = defaultdict(list)
-    # all_hsp = defaultdict(list)
 
-    #diff contigs and one found
-    lo_hsp_ehybrid = ehybridization(blast_object)  # assigns ehybrid attributes to each hsp from amp vs db
-    ehybrid_hsp_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
-    ehybrid_hsp_fail = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == False]
-    for hsp in ehybrid_hsp_fail:
-        if hsp.length >= CUTOFF_GENE_LENGTH:
-            print('length cutoff', hsp.length)
+    if debug == True:
+        all_hsp = defaultdict(list)
 
-    #Different contig prediction
-    result_dict_diff_contig = diff_contig_pred(lo_tup_diff_contig_not_found, max_r_bits_dict, max_r_bits_dict, ehybrid_hsp_pass, ehybrid_hsp_fail)
-
-    #One primer found prediction
     for single_hsp in lo_hsp_single_primers:
-
         single_hsp.both_primers_found = False
         single_hsp.contig = False
 
@@ -538,31 +495,109 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
                 # single_hsp.amp_sbjct = blast_hsp.sbjct
                 # single_hsp.amp_query = blast_hsp.query
 
-        # all_hsp[single_hsp.name].append(single_hsp)
+        if debug == True:
+            all_hsp[single_hsp.name].append(single_hsp)
+
     print('single primer found results')
+    if debug == True:
+        return [result_dict, all_hsp]
+    else:
+        return [result_dict]
 
-    # for k,v in all_hsp_same_contig.items():
-    #     all_hsp[k].append(v)
-    # for k,v in all_hsp_diff_contig.items():
-    #     all_hsp[k].append(v)
-    for k,v in result_dict_same_contig.items():
-        result_dict[k].append(v)
-    for k,v in result_dict_diff_contig.items():
-        result_dict[k].append(v)
+def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, max_f_bits_dict:dict, max_r_bits_dict:dict, max_amp_bits_dict:dict, debug=False) -> list:
 
-    # Builds all_hsp list (unzips tuples)
-    try:
-        lo_f_same_contig, lo_r_same_contig = zip(*lo_tup_same_contig)
-    except ValueError:
-        lo_f_same_contig = []
-        lo_r_same_contig = []
-    # Results
-    try:
-        lo_f_diff_contig, lo_r_diff_contig = zip(*lo_tup_diff_contig)
-    except ValueError:
-        lo_f_diff_contig = []
-        lo_r_diff_contig = []
-    all_hsp = list(lo_f_same_contig) + list(lo_r_same_contig) + list(lo_f_diff_contig) + list(lo_r_diff_contig) + lo_hsp_single_primers
+    #TODO: make sure that after adding a hsp to the results list that if the hsp is modified in later fcns, it is not affected.
+
+    # forward_blast = create_blastn_object(forward_primers, database, forward_out_file, True)
+    # reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file, True)
+    forward_blast_bsr = create_blastn_bsr_object(forward_primers, database)
+    reverse_blast_bsr = create_blastn_bsr_object(reverse_primers, database)
+    bsr(forward_blast_bsr, max_f_bits_dict)
+    bsr(reverse_blast_bsr, max_r_bits_dict)
+    blast_object = create_blastn_object(amp_sequences, database)
+    full_blast_qcov = create_blastn_object(amp_sequences, database, True)
+    dict_f_primers = create_primer_dict(forward_primers)
+    dict_r_primers = create_primer_dict(reverse_primers)
+
+    # lo_tup_same_queries = match_primer_queries(forward_blast_bsr.hsp_objects, reverse_blast_bsr.hsp_objects)
+    lo_tup_same_queries = [(f_hsp,r_hsp) for f_hsp in forward_blast_bsr.hsp_objects for r_hsp in reverse_blast_bsr.hsp_objects if f_hsp.name == r_hsp.name]
+    print('lo_tup_same_queries')
+    lo_tup_same_contig = [tup for tup in lo_tup_same_queries if tup[0].contig_name == tup[1].contig_name]
+    # lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig]
+
+    #same contig prediction
+    same_contig = same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r_primers, max_f_bits_dict, max_r_bits_dict, debug)
+    results_dict_same_contig = same_contig[0]
+    all_hsp_same_contig = {}
+    if debug == True:
+        all_hsp_same_contig = same_contig[1]
+
+    print('same contig results', results_dict_same_contig)
+
+    #doesn't look for genes on different contigs if they were already found on same contig
+    lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig]
+    same_contig_result_keys = [key for key,value in results_dict_same_contig.items()]
+    lo_tup_diff_contig_not_found = [tup for tup in lo_tup_diff_contig if tup[0].name not in same_contig_result_keys]
+
+    #ehybrid results
+    lo_hsp_ehybrid = ehybridization(blast_object)  # assigns ehybrid attributes to each hsp from amp vs db
+    ehybrid_hsp_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
+    ehybrid_hsp_fail = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == False]
+    for hsp in ehybrid_hsp_fail:
+        if hsp.length >= CUTOFF_GENE_LENGTH:
+            print('length cutoff', hsp.length)
+
+    #Different contig prediction
+    diff_contig = diff_contig_pred(lo_tup_diff_contig_not_found, max_r_bits_dict, max_r_bits_dict, ehybrid_hsp_pass, ehybrid_hsp_fail, debug)
+    results_diff_contig = diff_contig[0]
+    all_hsp_diff_contig = {}
+    if debug == True:
+        all_hsp_diff_contig = diff_contig[1]
+
+    #build single primer lists
+    # try:
+    #     lo_f_primers, lo_r_primers = zip(*lo_tup_same_queries)
+    # except ValueError:
+    #     lo_f_primers = []
+    #     lo_r_primers = []
+
+    # f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp not in lo_f_primers]
+    diff_contig_results_keys = [key for key, val in results_diff_contig.items()]
+    f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp not in same_contig_result_keys and hsp not in diff_contig_results_keys]
+    r_hsp_single_primers = [hsp for hsp in reverse_blast_bsr.hsp_objects if hsp not in same_contig_result_keys and hsp not in diff_contig_results_keys]
+
+    #assigns bsr !!!
+    for f_hsp in f_hsp_single_primers:
+        f_hsp.bsr = f_hsp.bits / max_f_bits_dict[f_hsp.name]
+    for r_hsp in r_hsp_single_primers:
+        r_hsp.bsr = r_hsp.bits / max_r_bits_dict[r_hsp.name]
+    lo_hsp_single_primers = list(itertools.chain(f_hsp_single_primers, r_hsp_single_primers))
+
+    #CHANGED TO LOOK FOR ALL HSP'S THAT WERE NOT FOUND IN same contig or diff contig results!!!
+    #One primer found prediction
+    one_primer = single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fail, debug)
+    results_one_primer = one_primer[0]
+    if debug == True:
+        all_hsp_one_primer = one_primer[1]
+
+    result_dict = defaultdict(list)
+    all_hsp = defaultdict(list)
+    if debug == True:
+        for k,v in all_hsp_same_contig.items():
+            for hsp in v:
+                all_hsp[k].append(hsp)
+        for k,v in all_hsp_diff_contig.items():
+            for hsp in v:
+                all_hsp[k].append(hsp)
+        for k,v in all_hsp_one_primer.items():
+            for hsp in v:
+                all_hsp[k].append(hsp)
+    for k,v in results_dict_same_contig.items():
+        result_dict[k].append(v)
+    for k,v in results_diff_contig.items():
+        result_dict[k].append(v)
+    for k,v in results_one_primer.items():
+        result_dict[k].append(v)
 
     #Testing
     # f_blast_rejects = [hsp.name for hsp in forward_blast_bsr.hsp_objects if hsp not in lo_f_same_contig and hsp not in lo_f_diff_contig and hsp not in f_hsp_single_primers]
@@ -570,7 +605,10 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
     # assert len(f_blast_rejects) == 0
     # assert len(r_blast_rejects) == 0
 
-    results_list = [result_dict, all_hsp]
+    if debug == True:
+        results_list = [result_dict, all_hsp]
+    else:
+        results_list = [result_dict]
 
     # print('epcr only results', epcr_only_results)
     return results_list
@@ -585,7 +623,7 @@ def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
     :param amplicon_sequences: The fasta file location of the amplicon sequences
     :return: A dictionary
     """
-
+#TODO: rearrange so you can call main in tests?
     #bsr
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
     r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
@@ -603,7 +641,6 @@ def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
         file_name = file_path.partition(db_dir + "/")[2]
         result = cgf_prediction(forward_primers, reverse_primers, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
         cgf_predictions_dict[file_name] = result[0]
-        all_hsp = result[1]
 
     return cgf_predictions_dict
 
