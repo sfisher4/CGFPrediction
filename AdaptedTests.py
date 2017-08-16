@@ -160,7 +160,7 @@ class TestWithAmp(unittest.TestCase):
                     # self.assertEqual(len(r_hsp_cj0008), 1)
                     for f_hsp_object in forward_blast_object.hsp_objects:
                         for r_hsp_object in reverse_blast_object.hsp_objects:
-                            result = CGFPrediction.pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
+                            result = CGFPrediction.epcr(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
                             if f_hsp_object.length == 20 and r_hsp_object.length == 22:
                                 self.assertTrue(result)
                             else:
@@ -168,7 +168,7 @@ class TestWithAmp(unittest.TestCase):
                 elif "cj0483_complete" in file_path:
                     for f_hsp_object in forward_blast_object.hsp_objects:
                         for r_hsp_object in reverse_blast_object.hsp_objects:
-                            result = CGFPrediction.pcr_directly(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
+                            result = CGFPrediction.epcr(f_hsp_object, r_hsp_object, amplicon_sequences, f_primer_dict, r_primer_dict)
                             if f_hsp_object.length == 20 and r_hsp_object.length == 21:
                                 self.assertTrue(result)
                             else:
@@ -331,7 +331,7 @@ class TestGeneAnnotationError(unittest.TestCase):
                 r_hsps = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.contig_name == f_hsp.contig_name and hsp.name == f_hsp.name]
                 for r_hsp in r_hsps:
                     count += 1
-                    result = CGFPrediction.pcr_directly(f_hsp, r_hsp, amplicon_sequences, f_primers_dict, r_primers_dict)
+                    result = CGFPrediction.epcr(f_hsp, r_hsp, amplicon_sequences, f_primers_dict, r_primers_dict)
                     self.assertEqual(result, True)
         self.assertEqual(count, 2)
 
@@ -749,7 +749,7 @@ class TestContigTrunc(unittest.TestCase):
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
             forward_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             reverse_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            hsp_predictions = CGFPrediction.cgf_prediction(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
+            hsp_predictions = CGFPrediction.ecgf(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
 
             if "61" in file_path or "306" in file_path:
                 self.assertEqual(len(hsp_predictions), 1)
@@ -1143,7 +1143,7 @@ class TestPCRDirectly(unittest.TestCase):
                 r_objects = [hsp for hsp in reverse_blast_object.hsp_objects if hsp.name in f_hsp_object.name]
                 # f_hsp_object and r_hsp_object should be on the same contig
                 for r_object in r_objects:
-                    if CGFPrediction.pcr_directly(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict):
+                    if CGFPrediction.epcr(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict):
                         self.assertEqual(f_hsp_object.contig_name, r_object.contig_name)
                         f_hsp_object.snp = None
                         r_object.snp = None
@@ -1191,7 +1191,7 @@ class TestPCRDirectly(unittest.TestCase):
                         self.assertEqual(f_hsp_object.contig_name, r_object.contig_name)
                         f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
                         r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
-                        val = CGFPrediction.pcr_directly(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict)
+                        val = CGFPrediction.epcr(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict)
                         if "_51" in file_path:
                             self.assertFalse(val)
                         else:

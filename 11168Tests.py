@@ -312,8 +312,8 @@ class MyTestCase(unittest.TestCase):
             file_name = file_path.partition(db_directory + "/")[2]
             print(file_name)
 
-            cgf_predictions = CGFPrediction.cgf_prediction(forward_primers, reverse_primers, file_path, amplicon_sequences,
-                                                           max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
+            cgf_predictions = CGFPrediction.ecgf(forward_primers, reverse_primers, file_path, amplicon_sequences,
+                                                 max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
             lo_predictions_names = []
             result = cgf_predictions[0]
             print('cgf predictions[0]', result)

@@ -3,8 +3,6 @@ from Bio import SeqIO
 from HSP import HSP
 import io
 
-E_VALUE_THRESHOLD = 0.04 #TODO: determine an e-value threshold
-
 #TODO: use Record.py instead?
 class Blastn(object):
     """ A blastn query Object from comparing two nucleotide sequences.
@@ -49,8 +47,6 @@ class Blastn(object):
                         dict_hsp[alignment] = lo_hsp
 
                 for hsp in dict_hsp[alignment]:
-
-                    # if hsp.expect < E_VALUE_CUTOFF: #removed this check b/c passed evalue into blastn query
                     hsp_name = blast_record.query
                     hsp_object = HSP(hsp_name)
                     hsp_object.start = hsp.sbjct_start

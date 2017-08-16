@@ -15,8 +15,8 @@ from memory_profiler import profile
 
 SCORE=135
 E_VALUE_CUTOFF = 1.0
-PERC_ID_CUTOFF = 80
-QCOV_HSP_PERC = 80
+PERC_ID_CUTOFF = 70
+QCOV_HSP_PERC = 70
 WORD_SIZE = 7
 MAX_MARGIN_BTWN_PRIMERS = 50 #<= #TODO: change this value to something smaller?
 CUTOFF_GENE_LENGTH = 70
@@ -130,7 +130,7 @@ def is_distance(f_hsp_object, r_hsp_object, amplicon_sequences):
             f_hsp_object.pcr_distance = (abs(amplicon_length - distance) <= MAX_MARGIN_BTWN_PRIMERS)
             r_hsp_object.pcr_distance = (abs(amplicon_length - distance) <= MAX_MARGIN_BTWN_PRIMERS)
 
-def pcr_directly(forward_hsp_object:HSP, reverse_hsp_object:HSP, amplicon_sequences, f_primers:dict, r_primers:dict):
+def epcr(forward_hsp_object:HSP, reverse_hsp_object:HSP, amplicon_sequences, f_primers:dict, r_primers:dict):
     """ Modifies objects attributes to indicate valid strands (f & r hsp facing each other), if SNP located on 3' end
     within SNP_THRESHOLD and correct distance from each other.
 
@@ -222,7 +222,7 @@ def valid_dir(hsp: HSP):
         hsp.location = True
         hsp.end_dist = abs(hsp.end - len(hsp.sbjct))
 
-def ehybridization(blast_object: Blastn):
+def ehyb(blast_object: Blastn):
     """ Determines if hsp objects in blast_object are of length >= CUTOFF_GENE_LENGTH
 
     :param blast_object: a Blastn object containing hsp objects
@@ -300,6 +300,33 @@ def bsr(blast_object:Blastn, max_bits_dict:dict):
             # print(hsp.bits / max_bits_dict[hsp.name])
             blast_object.hsp_objects.remove(hsp)
 
+def sga_ehybrid(lo_hsp_ehybrid):
+    result_dict = defaultdict(list)
+    for hsp in lo_hsp_ehybrid:
+        # this is where I will determine the genes that only require ehyb
+        # if "cj1324" in hsp.name:
+            result_dict[hsp.name].append(hsp)
+    return result_dict
+
+def sga_epcr(lo_hsp_epcr):
+    result_dict = defaultdict(list)
+    for hsp in lo_hsp_epcr:
+        # this is where I will determine the genes that only require epcr
+        #if "gene" in hsp.name:
+        result_dict[hsp.name].append(hsp)
+    return result_dict
+
+def sga(hsp_pass_ehyb:list, result_dict:dict):
+    ehyb_dict = sga_ehybrid(hsp_pass_ehyb)
+    for name, lo_hsp in ehyb_dict.items():
+        if name not in result_dict:
+            print(name,'found using ehybrid')
+            if "11168_" in name:
+                result_dict[name[6:]] = lo_hsp
+            else:
+                result_dict[name] = lo_hsp
+    return result_dict
+
 def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r_primers, max_f_bits_dict, max_r_bits_dict, debug):
     """
 
@@ -313,9 +340,11 @@ def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r
     """
 
     #same contig
-    lo_hsp_ehybrid_qcov = ehybridization(full_blast_qcov) # assigns ehybrid attributes to each hsp from amp vs db
+    lo_hsp_ehybrid_qcov = ehyb(full_blast_qcov) # assigns ehybrid attributes to each hsp from amp vs db
     ehybrid_qcov_pass = [hsp for hsp in lo_hsp_ehybrid_qcov if hsp.ehybrid == True]
     ehybrid_qcov_fail = [hsp for hsp in lo_hsp_ehybrid_qcov if hsp.ehybrid == False]
+    for hsp in ehybrid_qcov_pass:
+        print(hsp.name)
 
     result_dict = defaultdict(list)
     epcr_only_dict = defaultdict(list)
@@ -338,50 +367,33 @@ def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r
         f_hsp.bsr = f_hsp.bits / max_f_bits_dict[f_hsp.name]
         r_hsp.bsr = r_hsp.bits / max_r_bits_dict[r_hsp.name]
 
-        pcr_directly(f_hsp, r_hsp, amplicon_sequences, dict_f_primers, dict_r_primers) #assigns valid and snp attributes and pcr_distance and epcr
+        epcr(f_hsp, r_hsp, amplicon_sequences, dict_f_primers, dict_r_primers) #assigns valid and snp attributes and pcr_distance and epcr
         assert f_hsp.epcr == r_hsp.epcr
         # if f_hsp.epcr == True and r_hsp.epcr == True:
         #     lo_tup_same_contig_pcr_results.append(tup)
 
         for hsp in ehybrid_qcov_pass:
-            if f_hsp.start == hsp.start or r_hsp.start == hsp.start or f_hsp.end == hsp.end or r_hsp.end == hsp.end and f_hsp.name == hsp.name:
+            # if f_hsp.name in hsp.name and r_hsp.name == hsp.name:
+            if f_hsp.start == hsp.start or r_hsp.start == hsp.start or f_hsp.end == hsp.end or r_hsp.end == hsp.end and f_hsp.contig_name == hsp.contig_name:
                 # f_hsp.amp_found, r_hsp.amp_found = True, True
                 f_hsp.ehybrid, r_hsp.ehybrid = True, True
                 f_hsp.amp_len, r_hsp.amp_len = hsp.length, hsp.length
-                # f_hsp.amp_sbjct, r_hsp.amp_sbjct = hsp.sbjct, hsp.sbjct
-                # f_hsp.amp_query, r_hsp.amp_query = hsp.query, hsp.query
+                f_hsp.amp_sbjct, r_hsp.amp_sbjct = hsp.amp_sbjct, hsp.amp_sbjct
+                f_hsp.amp_query, r_hsp.amp_query = hsp.amp_query, hsp.amp_query
         for hsp in ehybrid_qcov_fail:
+        #     # if f_hsp.name in hsp.name and r_hsp.name in hsp.name:
             if f_hsp.start == hsp.start or r_hsp.start == hsp.start or f_hsp.end == hsp.end or r_hsp.end == hsp.end and f_hsp.contig_name == hsp.contig_name:
                 # f_hsp.amp_found, r_hsp.amp_found = True, True
                 f_hsp.ehybrid, r_hsp.ehybrid = False, False
                 f_hsp.amp_len, r_hsp.amp_len = hsp.length, hsp.length
-                # f_hsp.amp_sbjct = hsp.sbjct
-                # r_hsp.amp_sbjct = hsp.sbjct
-                # f_hsp.amp_query = hsp.query
-                # r_hsp.amp_query = hsp.query
+                f_hsp.amp_sbjct = hsp.amp_sbjct
+                r_hsp.amp_sbjct = hsp.sbjct
+                f_hsp.amp_query = hsp.amp_query
         # assert f_hsp.ehybrid == r_hsp.ehybrid
 
-        if (f_hsp.ehybrid or r_hsp.ehybrid) and f_hsp.epcr:
-            # assert result_dict[f_hsp.name] == None
-            # f_hsp_new = copy.deepcopy(f_hsp)
-            # r_hsp_new = copy.deepcopy(r_hsp)
+        if f_hsp.epcr and (f_hsp.ehybrid or r_hsp.ehybrid):
             result_dict[f_hsp.name].append(f_hsp)
             result_dict[r_hsp.name].append(r_hsp)
-            # all_hsp[f_hsp.name].append(f_hsp_new)
-            # all_hsp[r_hsp.name].append(r_hsp_new)
-            # assert len(result_dict[f_hsp.name]) == 2
-        # elif f_hsp.epcr and not (f_hsp.ehybrid or r_hsp.ehybrid):
-            # f_hsp_new = copy.deepcopy(f_hsp)
-            # r_hsp_new = copy.deepcopy(r_hsp)
-            # epcr_only_dict[f_hsp.name].append(f_hsp)
-            # epcr_only_dict[r_hsp.name].append(r_hsp)
-            # all_hsp[f_hsp.name].append(f_hsp_new)
-            # all_hsp[r_hsp.name].append(r_hsp_new)
-        # else:
-        #     f_hsp_new = copy.deepcopy(f_hsp)
-        #     r_hsp_new = copy.deepcopy(r_hsp)
-        #     all_hsp[f_hsp.name].append(f_hsp_new)
-        #     all_hsp[r_hsp.name].append(r_hsp_new)
         if debug == True:
             all_hsp[f_hsp.name].append(f_hsp)
             all_hsp[r_hsp.name].append(r_hsp)
@@ -421,39 +433,39 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
                 f_hsp.ehybrid = True
                 f_hsp.amp_len = hsp.length
                 valid_dir(f_hsp)
-                # f_hsp.amp_sbjct = hsp.sbjct
-                # f_hsp.amp_query = hsp.query
+                f_hsp.amp_sbjct = hsp.amp_sbjct
+                f_hsp.amp_query = hsp.amp_query
             if r_hsp.start == hsp.start or r_hsp.end == hsp.end and r_hsp.contig_name == hsp.contig_name:
                 r_hsp.ehybrid = True
                 r_hsp.amp_len = hsp.length
                 valid_dir(r_hsp)
-                # r_hsp.amp_sbjct = hsp.sbjct
-                # r_hsp.amp_query = hsp.query
+                r_hsp.amp_sbjct = hsp.amp_sbjct
+                r_hsp.amp_query = hsp.amp_query
             # assert len(result_dict[f_hsp.name]) == 0
-            if (f_hsp.ehybrid and r_hsp.ehybrid) and (f_hsp.location and r_hsp.location):
-                # f_hsp_new = copy.deepcopy(f_hsp)
-                # r_hsp_new = copy.deepcopy(r_hsp)
-                result_dict[f_hsp.name].append((f_hsp, r_hsp))
-            elif f_hsp.ehybrid and f_hsp.location:
-                # f_hsp_new = copy.deepcopy(f_hsp)
-                result_dict[f_hsp.name].append((f_hsp, None))
-            elif r_hsp.ehybrid and r_hsp.location:
-                # r_hsp_new = copy.deepcopy(r_hsp)
-                result_dict[r_hsp.name].append((None, r_hsp))
+            #TODO: added both f & r if only one is found.
+            if (f_hsp.ehybrid and f_hsp.location) or (r_hsp.ehybrid and r_hsp.location):
+                result_dict[f_hsp.name].append(f_hsp, r_hsp)
+                print('added b/c on different contigs')
+            # if (f_hsp.ehybrid and r_hsp.ehybrid) and (f_hsp.location and r_hsp.location):
+            #     result_dict[f_hsp.name].append((f_hsp, r_hsp))
+            # elif f_hsp.ehybrid and f_hsp.location:
+            #     result_dict[f_hsp.name].append((f_hsp, None))
+            # elif r_hsp.ehybrid and r_hsp.location:
+            #     result_dict[r_hsp.name].append((None, r_hsp))
                 # assert len(result_dict[f_hsp.name]) < 3
         for hsp in ehybrid_hsp_fail:
             if f_hsp.start == hsp.start or f_hsp.end == hsp.end and f_hsp.contig_name == hsp.contig_name:
                 f_hsp.ehybrid = False
                 f_hsp.amp_len = hsp.length
-                # f_hsp.amp_query = hsp.query
-                # f_hsp.amp_sbjct = hsp.sbjct
+                f_hsp.amp_query = hsp.amp_query
+                f_hsp.amp_sbjct = hsp.amp_sbjct
                 # f_hsp_new = copy.deepcopy(f_hsp)
                 # all_hsp[f_hsp.name].append(f_hsp)
             if r_hsp.start == hsp.start or r_hsp.end == hsp.end and r_hsp.contig_name == hsp.contig_name:
                 r_hsp.ehybrid = False
                 r_hsp.amp_len = hsp.length
-                # r_hsp.amp_sbjct = hsp.sbjct
-                # r_hsp.amp_query = hsp.query
+                r_hsp.amp_sbjct = hsp.amp_sbjct
+                r_hsp.amp_query = hsp.amp_query
 
                 # r_hsp_new = copy.deepcopy(r_hsp)
         if debug == True:
@@ -484,29 +496,28 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
                 if single_hsp.location == True:
                     assert result_dict[single_hsp.name] == None
                     result_dict[single_hsp.name].append(single_hsp)
+                    print('added b/c of single primer found')
                     assert len(result_dict[single_hsp.name]) < 2
-                # single_hsp.amp_sbjct = blast_hsp.sbjct
-                # single_hsp.amp_query = blast_hsp.query
+                single_hsp.amp_sbjct = blast_hsp.amp_sbjct
+                single_hsp.amp_query = blast_hsp.amp_query
         for blast_hsp in ehybrid_hsp_fail:
             if single_hsp.start == blast_hsp.start or single_hsp.end == blast_hsp.end and single_hsp.contig_name == blast_hsp.contig_name:
                 # f_hsp.amp_found = True
                 single_hsp.ehybrid = False
                 single_hsp.amp_len = blast_hsp.length
-                # single_hsp.amp_sbjct = blast_hsp.sbjct
-                # single_hsp.amp_query = blast_hsp.query
+                single_hsp.amp_sbjct = blast_hsp.amp_sbjct
+                single_hsp.amp_query = blast_hsp.amp_query
 
         if debug == True:
             all_hsp[single_hsp.name].append(single_hsp)
 
-    print('single primer found results')
     if debug == True:
         return [result_dict, all_hsp]
     else:
         return [result_dict]
 
-def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, max_f_bits_dict:dict, max_r_bits_dict:dict, max_amp_bits_dict:dict, debug=False) -> list:
-
-    #TODO: make sure that after adding a hsp to the results list that if the hsp is modified in later fcns, it is not affected.
+#TODO: make sure that after adding a hsp to the results list that if the hsp is modified in later fcns, it is not affected.
+def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, max_f_bits_dict:dict, max_r_bits_dict:dict, max_amp_bits_dict:dict, debug=False) -> list:
 
     # forward_blast = create_blastn_object(forward_primers, database, forward_out_file, True)
     # reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file, True)
@@ -519,9 +530,7 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
     dict_f_primers = create_primer_dict(forward_primers)
     dict_r_primers = create_primer_dict(reverse_primers)
 
-    # lo_tup_same_queries = match_primer_queries(forward_blast_bsr.hsp_objects, reverse_blast_bsr.hsp_objects)
     lo_tup_same_queries = [(f_hsp,r_hsp) for f_hsp in forward_blast_bsr.hsp_objects for r_hsp in reverse_blast_bsr.hsp_objects if f_hsp.name == r_hsp.name]
-    print('lo_tup_same_queries')
     lo_tup_same_contig = [tup for tup in lo_tup_same_queries if tup[0].contig_name == tup[1].contig_name]
     # lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig]
 
@@ -532,23 +541,19 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
     if debug == True:
         all_hsp_same_contig = same_contig[1]
 
-    print('same contig results', results_dict_same_contig)
+    # print('same contig results', results_dict_same_contig)
 
     #doesn't look for genes on different contigs if they were already found on same contig
     lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig]
-    same_contig_result_keys = [key for key,value in results_dict_same_contig.items()]
-    lo_tup_diff_contig_not_found = [tup for tup in lo_tup_diff_contig if tup[0].name not in same_contig_result_keys]
+    # lo_tup_diff_contig_not_found = [tup for tup in lo_tup_diff_contig if tup[0].name not in same_contig_result_keys]
 
-    #ehybrid results
-    lo_hsp_ehybrid = ehybridization(blast_object)  # assigns ehybrid attributes to each hsp from amp vs db
+    #ehybrid results (qcov not required)
+    lo_hsp_ehybrid = ehyb(blast_object)  # assigns ehybrid attributes to each hsp from amp vs db
     ehybrid_hsp_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
     ehybrid_hsp_fail = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == False]
-    for hsp in ehybrid_hsp_fail:
-        if hsp.length >= CUTOFF_GENE_LENGTH:
-            print('length cutoff', hsp.length)
 
     #Different contig prediction
-    diff_contig = diff_contig_pred(lo_tup_diff_contig_not_found, max_r_bits_dict, max_r_bits_dict, ehybrid_hsp_pass, ehybrid_hsp_fail, debug)
+    diff_contig = diff_contig_pred(lo_tup_diff_contig, max_r_bits_dict, max_r_bits_dict, ehybrid_hsp_pass, ehybrid_hsp_fail, debug)
     results_diff_contig = diff_contig[0]
     all_hsp_diff_contig = {}
     if debug == True:
@@ -563,6 +568,7 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
 
     # f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp not in lo_f_primers]
     diff_contig_results_keys = [key for key, val in results_diff_contig.items()]
+    same_contig_result_keys = [key for key,value in results_dict_same_contig.items()]
     f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp not in same_contig_result_keys and hsp not in diff_contig_results_keys]
     r_hsp_single_primers = [hsp for hsp in reverse_blast_bsr.hsp_objects if hsp not in same_contig_result_keys and hsp not in diff_contig_results_keys]
 
@@ -577,12 +583,10 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
     #One primer found prediction
     one_primer = single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fail, debug)
     results_one_primer = one_primer[0]
-    if debug == True:
-        all_hsp_one_primer = one_primer[1]
-
     result_dict = defaultdict(list)
     all_hsp = defaultdict(list)
     if debug == True:
+        all_hsp_one_primer = one_primer[1]
         for k,v in all_hsp_same_contig.items():
             for hsp in v:
                 all_hsp[k].append(hsp)
@@ -598,6 +602,13 @@ def cgf_prediction(forward_primers:str, reverse_primers:str, database:str, amp_s
         result_dict[k].append(v)
     for k,v in results_one_primer.items():
         result_dict[k].append(v)
+
+    #specific gene approach
+    #TODO: commented out to test # of F+/F- without ehyb by itself
+    # lo_hsp_ehybrid_qcov = ehyb(full_blast_qcov)  # assigns ehybrid attributes to each hsp from amp vs db
+    # ehybrid_qcov_pass = [hsp for hsp in lo_hsp_ehybrid_qcov if hsp.ehybrid == True]
+    # result_dict = sga(ehybrid_qcov_pass, result_dict) #add genes that are found using sga if not already found.
+
 
     #Testing
     # f_blast_rejects = [hsp.name for hsp in forward_blast_bsr.hsp_objects if hsp not in lo_f_same_contig and hsp not in lo_f_diff_contig and hsp not in f_hsp_single_primers]
@@ -623,7 +634,7 @@ def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
     :param amplicon_sequences: The fasta file location of the amplicon sequences
     :return: A dictionary
     """
-#TODO: rearrange so you can call main in tests?
+#TODO: rearrange so you can debug from here
     #bsr
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
     r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
@@ -639,7 +650,7 @@ def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
     cgf_predictions_dict = {}
     for file_path in files_paths:
         file_name = file_path.partition(db_dir + "/")[2]
-        result = cgf_prediction(forward_primers, reverse_primers, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
+        result = ecgf(forward_primers, reverse_primers, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
         cgf_predictions_dict[file_name] = result[0]
 
     return cgf_predictions_dict
