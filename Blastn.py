@@ -74,3 +74,6 @@ class Blastn(object):
 
                     hsp_objects.append(hsp_object)
         self.hsp_objects = hsp_objects
+
+    def remove_hsp_object_all(self, hsp):
+        self.hsp_objects = [hsp_o for hsp_o in self.hsp_objects if hsp != hsp_o]

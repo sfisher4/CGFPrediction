@@ -1,6 +1,9 @@
 
 from Results import Results
 from memory_profiler import profile
+import attr
+
+#@attr.s
 class HSP(Results):
     """A High Sequence Pair object from running blastn on two nucleotide sequences
 
@@ -22,6 +25,15 @@ class HSP(Results):
         query: The queries sequence
         gaps: Number of gaps in the hsp
     """
+    # name = attr.ib()
+    # expect = attr.ib(default= -1)
+    # start = attr.ib(default= -1)
+    # end = attr.ib(default= -1)
+    # query_start = attr.ib(default= -1)
+    # query_end = attr.ib(default= -1)
+    # identities = attr.ib(default= -1)
+
+
     def __init__(self, name):
         super(HSP, self).__init__(name)
         self.name = name
@@ -37,10 +49,14 @@ class HSP(Results):
         self.sbjct = ""
         self.query = ""
         self.gaps = 0
+        self.bsr = -1
         self.duplicate = False
 
     def set_name(self, name):
         self.name = name
+
+    def __eq__(self, other):
+        return self.sbjct == other.sbjct and self.contig_name == other.contig_name
 
 
 

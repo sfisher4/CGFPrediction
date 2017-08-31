@@ -13,16 +13,23 @@ Prerequisites:
 
     2) All forward primer sequences must be in a single Fasta file together, reverse primer sequences in a single Fasta
        file together and all amplicon sequences in a single Fasta file together.
-        ie. eCGF takes in one forward primers file, one reverse primers file and one amp sequence file.
+        ie. eCGF takes in one forward primers file, one reverse primers file and one amp sequences file.
     3) All databases must be formatted using makeblastdb prior to running the program.
-        a) Installing makeblastdb:
+        a) Installing blast:
+            Visit this webpage for instructions:
+            https://www.ncbi.nlm.nih.gov/books/NBK279690/
 
         b)Formatting database(s) using makeblastdb:
 
-       To format a single database, type the following into a terminal:
-       >makeblastdb -in /path/to/database/location -dbtype nucl
+           To format a single database, type the following into a terminal:
+           $makeblastdb -in /path/to/database/location -dbtype nucl
 
-       To format multiple databases in a directory, type the following into a terminal:
-       >makeblastdb -in /path/to/databases/directory/*.fasta; do /path/to/makeblastdb/installation/bin/makeblastdb -in $file -dbtype nucl
+           To format multiple databases in a directory, type the following into a terminal:
+           $makeblastdb -in /path/to/databases/directory/*.fasta; do /path/to/makeblastdb/installation/bin/makeblastdb -in $file -dbtype nucl
 
 
+** decision tree --> ValTree
+** how to run
+** what is the output
+** how to interpret validation data?
+** github account?
