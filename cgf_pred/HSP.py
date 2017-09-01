@@ -1,7 +1,6 @@
 
-from Results import Results
-from memory_profiler import profile
-import attr
+from cgf_pred.Results import Results
+
 
 #@attr.s
 class HSP(Results):

@@ -1,9 +1,9 @@
-import unittest
-from HSP import HSP
-import os
 import errno
+import os
+import unittest
 
-import CGFPrediction
+from cgf_pred import CGFPrediction
+from cgf_pred.HSP import HSP
 
 HSP_THRESHOLD = 0.9
 E_VALUE_THRESHOLD = 0.04

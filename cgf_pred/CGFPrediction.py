@@ -1,33 +1,33 @@
-from Bio.Blast.Applications import NcbiblastnCommandline
-from Bio import SeqIO
-from Blastn import Blastn
-from Bio.Seq import Seq
-from Bio.Alphabet import generic_dna
-from HSP import HSP
-import os
-import itertools
-from collections import defaultdict
-import copy
 import cProfile
-import multiprocessing as mp
-import re
-from memory_profiler import profile
+import copy
+import os
+import subprocess
+from collections import defaultdict
+
+from Bio import SeqIO
+from Bio.Alphabet import generic_dna
+from Bio.Blast.Applications import NcbiblastnCommandline
+from Bio.Seq import Seq
+
+from cgf_pred.Blastn import Blastn
+from cgf_pred.HSP import HSP
 
 #BLASTN LIMITATIONS
 #db vs primer
-MIN_BSR = 0.6           #for primers
+MIN_BSR = 0.6         #for primers #TODO!!!
 #db vs amp:
 E_VALUE_CUTOFF = 0.01   #for ehyb
 #other
 QCOV_HSP_PERC = 70      #for primers and ehyb on same contig
 WORD_SIZE = 7           #word size used for blastn
-PERC_ID_CUTOFF = 80     #for both primers and ehyb
+PERC_ID_CUTOFF = 85     #for both primers and ehyb
 
 #PROGRAM SPECIFIC VALUES
 MAX_MARGIN_BTWN_PRIMERS = 50    #max distance that can be +/- the correct distance between primers #TODO: switch to %?
 CUTOFF_GENE_LENGTH = 70         #cutoff gene length for ehyb
 SNP_THRESHOLD = 4               #4 bp must be an exact match with 3' end of primer
 MAX_AMP_PRIMER_ALIGN = 10       #The amount of bp's that can be different btwn the hsp primer and hsp amp when searching for ehyb on same or diff contigs
+MAX_PERC_EHYB_PRIMER_ENDS = 0.00
 MAX_PERC_END = 0.05             #Max percentage of amp_length that will consider a primer at end of contig.
 
 def blastn_query(query_genes, database, qcov, id):
@@ -226,8 +226,7 @@ def valid_dir(hsp: HSP):
             hsp.location = False
             hsp.end_dist = abs(hsp.start - hsp.amp_len)
 
-    else:
-        print('seq found over entire amp region!')
+    else: #seq'n found over entire amp
         hsp.location = True
         hsp.end_dist = abs((hsp.start + hsp.amp_len) - hsp.db_length - 1)
 
@@ -316,10 +315,10 @@ def sga_ehybrid(lo_hsp_ehybrid):
     """
 
     result_dict = defaultdict(list)
-    ehyb_only = [] #['cj0421c', 'cj0246c', 'cj1294', 'cj1324', 'cj1427c', 'cj1721', 'cj1439', 'cj1552', 'cj1551'] #rm 0755, 'cj1334', 'cj1329'
+    # ehyb_only = [] #['cj0421c', 'cj0246c', 'cj1294', 'cj1324', 'cj1427c', 'cj1721', 'cj1439', 'cj1552', 'cj1551'] #rm 0755, 'cj1334', 'cj1329'
     for hsp in lo_hsp_ehybrid:
-        for gene in ehyb_only:
-            if gene in hsp.name:
+        # for gene in ehyb_only:
+        #     if gene in hsp.name:
                 result_dict[hsp.name].append(hsp)
     return result_dict
 
@@ -349,8 +348,7 @@ def sga(hsp_pass_ehyb:list, result_dict:dict):
     ehyb_dict = sga_ehybrid(hsp_pass_ehyb)
     for name, lo_hsp in ehyb_dict.items():
         if name not in result_dict:
-            print(name,'found using ehybrid')
-            # lo_hsp_new = copy.copy(lo_hsp)
+            #found using ehybrid
             if "11168_" in name:
                 result_dict[name[6:]].append(lo_hsp)
             else:
@@ -395,8 +393,8 @@ def ehyb_both_prim_found(blast, f_hsp, r_hsp):
 
     for hsp in ehybrid_qcov_pass:
         # if f_hsp.name in hsp.name and r_hsp.name == hsp.name:
-        if abs(f_hsp.start - hsp.start) < MAX_AMP_PRIMER_ALIGN or abs(r_hsp.start - hsp.start) < MAX_AMP_PRIMER_ALIGN \
-                or abs(f_hsp.end - hsp.end) < MAX_AMP_PRIMER_ALIGN or abs(r_hsp.end - hsp.end) < MAX_AMP_PRIMER_ALIGN \
+        if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                 and f_hsp.contig_name == hsp.contig_name:
             f_hsp.ehybrid, r_hsp.ehybrid = True, True
             f_hsp.amp_len, r_hsp.amp_len = hsp.length, hsp.length
@@ -404,8 +402,8 @@ def ehyb_both_prim_found(blast, f_hsp, r_hsp):
             f_hsp.amp_query, r_hsp.amp_query = hsp.query, hsp.query
     for hsp in ehybrid_qcov_fail:
         # if f_hsp.name in hsp.name and r_hsp.name in hsp.name:
-        if abs(f_hsp.start - hsp.start) < MAX_AMP_PRIMER_ALIGN or abs(r_hsp.start - hsp.start) < MAX_AMP_PRIMER_ALIGN \
-                or abs(f_hsp.end - hsp.end) < MAX_AMP_PRIMER_ALIGN or abs(r_hsp.end - hsp.end) < MAX_AMP_PRIMER_ALIGN \
+        if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                 and r_hsp.contig_name == hsp.contig_name:
             f_hsp.ehybrid, r_hsp.ehybrid = False, False
             f_hsp.amp_len, r_hsp.amp_len = hsp.length, hsp.length
@@ -440,10 +438,6 @@ def same_contig_pred(lo_tup_same_contig, full_blast_qcov, dict_f_primers, dict_r
         ehyb_both_prim_found(full_blast_qcov, f_hsp, r_hsp)
 
         if f_hsp.epcr and (f_hsp.ehybrid or r_hsp.ehybrid):
-            if f_hsp.bsr < MIN_BSR:
-                print(f_hsp.name)
-                print(f_hsp.bsr)
-                print(r_hsp.bsr)
             result_dict[f_hsp.name].append(f_hsp)
             result_dict[r_hsp.name].append(r_hsp)
 
@@ -478,8 +472,6 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
         r_hsp_old = tup[1]
         copied_o = contig_copy(f_hsp_old, r_hsp_old, max_f_bits_dict, max_r_bits_dict, False)
         f_hsp, r_hsp = copied_o[0], copied_o[1]
-        # print('f and r', f_hsp, f_hsp.partner)
-        # print('r and r', r_hsp, r_hsp.partner)
 
         for hsp in ehybrid_hsp_pass:
         # consider depending on strand !!! ie. which direction the primer is facing!!!
@@ -515,7 +507,7 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
         if (f_hsp.ehybrid and f_hsp.location) and (r_hsp.ehybrid and r_hsp.location):
             result_dict[f_hsp.name].append(f_hsp)
             result_dict[r_hsp.name].append(r_hsp)
-            print('added ',f_hsp.name, ' b/c on different contigs')
+            # print('added ',f_hsp.name, ' b/c on different contigs')
             # if (f_hsp.ehybrid and r_hsp.ehybrid) and (f_hsp.location and r_hsp.location):
             #     result_dict[f_hsp.name].append((f_hsp, r_hsp))
             # elif f_hsp.ehybrid and f_hsp.location:
@@ -524,13 +516,13 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
             #     result_dict[r_hsp.name].append((None, r_hsp))
                 # assert len(result_dict[f_hsp.name]) < 3
         for hsp in ehybrid_hsp_fail:
-            if abs(f_hsp.start - hsp.start) < MAX_AMP_PRIMER_ALIGN or abs(f_hsp.end - hsp.end) < MAX_AMP_PRIMER_ALIGN \
+            if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                     and f_hsp.contig_name == hsp.contig_name:
                 f_hsp.ehybrid = False
                 f_hsp.amp_len = hsp.length
                 f_hsp.amp_query = hsp.query
                 f_hsp.amp_sbjct = hsp.sbjct
-            if abs(r_hsp.start - hsp.start) < MAX_AMP_PRIMER_ALIGN or abs(r_hsp.end - hsp.end) < MAX_AMP_PRIMER_ALIGN \
+            if abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                     and r_hsp.contig_name == hsp.contig_name:
                 r_hsp.ehybrid = False
                 r_hsp.amp_len = hsp.length
@@ -561,13 +553,11 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
     if debug == True:
         all_hsp  = defaultdict(list)
     for single_hsp in lo_hsp_single_primers:
-        # print(single_hsp.name)
-        # print(single_hsp.contig_name)
         single_hsp.both_primers_found = False
         single_hsp.contig = False
 
         for blast_hsp in ehybrid_hsp_pass:
-            if abs(single_hsp.start - blast_hsp.start) < MAX_AMP_PRIMER_ALIGN or abs(single_hsp.end - blast_hsp.end) < MAX_AMP_PRIMER_ALIGN and single_hsp.contig_name == blast_hsp.contig_name:
+            if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) and single_hsp.contig_name == blast_hsp.contig_name:
                 # f_hsp.amp_found = True
                 single_hsp.ehybrid = True
                 single_hsp.amp_len = blast_hsp.length
@@ -576,11 +566,10 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
                 valid_dir(single_hsp)
                 if single_hsp.location == True:
                     result_dict[single_hsp.name].append(single_hsp)
-                    print(single_hsp.name, 'added b/c of single primer found')
-                    print(single_hsp.__dict__)
+                    # print(single_hsp.name, 'added b/c of single primer found')
                     assert len(result_dict[single_hsp.name]) < 2
         for blast_hsp in ehybrid_hsp_fail:
-            if single_hsp.start == blast_hsp.start or single_hsp.end == blast_hsp.end and single_hsp.contig_name == blast_hsp.contig_name:
+            if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) and single_hsp.contig_name == blast_hsp.contig_name:
                 # f_hsp.amp_found = True
                 single_hsp.ehybrid = False
                 single_hsp.amp_len = blast_hsp.length
@@ -590,7 +579,6 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
         if debug == True:
             if single_hsp.bsr >= MIN_BSR:
                 all_hsp[single_hsp.name].append(single_hsp)
-    print('one primer results', result_dict)
     if debug == True:
         return [result_dict, all_hsp]
     else:
@@ -617,13 +605,15 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
 
     # forward_blast = create_blastn_object(forward_primers, database, forward_out_file, True)
     # reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file, True)
+    #TODO: multiprocessing when creating blastn objects?
     forward_blast_bsr = create_blastn_bsr_object(forward_primers, database)
     reverse_blast_bsr = create_blastn_bsr_object(reverse_primers, database)
-    bsr(forward_blast_bsr, max_f_bits_dict)
-    bsr(reverse_blast_bsr, max_r_bits_dict)
     blast_object = create_blastn_object(amp_sequences, database)
     full_blast_qcov = create_blastn_object(amp_sequences, database, True)
-    full_blast_qcov_id = create_blastn_object(amp_sequences, database, True, 80)
+    full_blast_qcov_id = create_blastn_object(amp_sequences, database, True, 85)
+
+    bsr(forward_blast_bsr, max_f_bits_dict)
+    bsr(reverse_blast_bsr, max_r_bits_dict)
     dict_f_primers = create_primer_dict(forward_primers)
     dict_r_primers = create_primer_dict(reverse_primers)
 
@@ -659,8 +649,6 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     # f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp not in lo_f_primers]
     diff_contig_results_keys = [key for key, val in results_diff_contig.items()]
     same_contig_result_keys = [key for key,value in results_dict_same_contig.items()]
-    print('same contig results', same_contig_result_keys)
-    print('diff contig results', diff_contig_results_keys)
 
     f_hsp_single_primers = [hsp for hsp in forward_blast_bsr.hsp_objects if hsp.name not in same_contig_result_keys and hsp.name not in diff_contig_results_keys]
     r_hsp_single_primers = [hsp for hsp in reverse_blast_bsr.hsp_objects if hsp.name not in same_contig_result_keys and hsp.name not in diff_contig_results_keys]
@@ -668,8 +656,6 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     #testing
     f_hsp_test = [hsp.name for hsp in f_hsp_single_primers]
     r_hsp_test = [hsp.name for hsp in r_hsp_single_primers]
-    print('f hsp single primers', f_hsp_test)
-    print('r hsp single primers', r_hsp_test)
 
     #assigns bsr !!!
     lo_hsp_single_primers = []
@@ -733,16 +719,24 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
 
 
 #TODO: changed db_dir to file_path when calling on each genome.
-def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
+def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     """
 
     :param db_directory: The location of the directory with fasta database files contained (already formatted using makeblastdb)
-    :param forward_primers: The fasta file location of the forward primers
-    :param reverse_primers: The fasta file location of the reverse primers
+    :param f_primers_fasta: The fasta file location of the forward primers
+    :param r_primers_fasta: The fasta file location of the reverse primers
     :param amplicon_sequences: The fasta file location of the amplicon sequences
     :return: A dictionary
     """
-#TODO: rearrange so you can debug from here
+    #makeblastdb all inputs if not already done
+    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db_fasta)
+    blastfp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(f_primers_fasta)
+    blastrp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(r_primers_fasta)
+    blastamp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(amp_fasta)
+    DB_process = subprocess.Popen(blastdb_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    DB_process.wait()
+
+
     #bsr
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
     r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
@@ -751,20 +745,20 @@ def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
     max_r_bits_dict = max_bs(r_bs_primer_dir)
     max_amp_bits_dict = max_bs(amp_bs_dir)
 
-    files = (file for file in os.listdir(db_dir) if file.endswith('.fasta'))
+    files = (file for file in os.listdir(db_fasta) if file.endswith('.fasta'))
     files_paths = []
     for file in files:
-        files_paths.append(os.path.abspath(db_dir) + '/' + file)
+        files_paths.append(os.path.abspath(db_fasta) + '/' + file)
     cgf_predictions_dict = {}
 
     #TODO: comment out for multiprocessing!
     for file_path in files_paths:
-        file_name = file_path.partition(db_dir + "/")[2]
-        result = ecgf(forward_primers, reverse_primers, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
+        file_name = file_path.partition(db_fasta + "/")[2]
+        result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
         cgf_predictions_dict[file_name] = result[0]
 
     # multiprocessing
-    # processes = [mp.Process(target=ecgf, args=(forward_primers, reverse_primers, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
+    # processes = [mp.Process(target=ecgf, args=(f_primers_fasta, r_primers_fasta, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
     # for p in processes:
     #     p.start()
     # for p in processes:
@@ -774,9 +768,10 @@ def main(db_dir, forward_primers, reverse_primers, amplicon_sequences):
 
     #multiprocessing using pool
     # pool = mp.Pool(processes=4)
-    # results = [pool.apply(ecgf, args=(forward_primers, reverse_primers, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
+    # results = [pool.apply(ecgf, args=(f_primers_fasta, r_primers_fasta, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
     # print('results', results)
 
+    print(cgf_predictions_dict)
     return cgf_predictions_dict
 
 
@@ -791,19 +786,17 @@ if __name__ == "__main__":
     forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
     reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-    test_11168_cases = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
+    all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
     debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
     multipro_tests = "/home/sfisher/Sequences/11168_test_files/multipro_tests"
     # test_memory = "/home/sfisher/Sequences/11168_test_files/memory_trial"
     # test_memory2 = "/home/sfisher/Sequences/11168_test_files/memory_trial2"
     # test_cprofile_file = "/home/sfisher/Sequences/11168_test_files/memory_trial/06_2855.fasta"
 
-
     #TODO: check for error for if makeblastdb hasn't been run and return an error message to the user indicating the error.
 
-
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
-    cProfile.run('main(debug_cases, forward_primers, reverse_primers, amplicon_sequences); print')
+    cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
     # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
 
 

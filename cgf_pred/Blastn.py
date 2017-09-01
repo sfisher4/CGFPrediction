@@ -1,7 +1,10 @@
-from Bio.Blast import NCBIXML
-from Bio import SeqIO
-from HSP import HSP
 import io
+
+from Bio import SeqIO
+from Bio.Blast import NCBIXML
+
+from cgf_pred.HSP import HSP
+
 
 #TODO: use Record.py instead?
 class Blastn(object):

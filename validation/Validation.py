@@ -1,13 +1,15 @@
-import CGFPrediction
-import os
 import gc
+import os
 from collections import defaultdict
+
 import pandas as pd
+
+from cgf_pred import CGFPrediction
 
 MIN_PARTNER_BSR = 0.7
 MIN_BSR = 0.7
 
-def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results):
+def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only):
     # file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
     # file = open("/home/sfisher/Sequences/11168_test_files/cgf40_results_modified.txt", "r")
     file = open(lab_binary_results, "r")
@@ -116,7 +118,7 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
         myfile.write('\n' + "\n" + "# of F+: " + str(t_lo_f_pos) + "\n")
         myfile.write('\n' + "\n" + "# of F-: " + str(t_lo_f_neg) + "\n")
 
-def create_short_val_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, result_file, lab_binary_results):
+def create_short_val_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, result_file, lab_binary_results, ehyb_only):
 
     file = open(lab_binary_results, "r")
 
@@ -194,7 +196,6 @@ def create_short_val_results(forward_primers, reverse_primers, amplicon_sequence
             binary_tree_attrib.insert(i, None)
 
         short_file = open(result_file, "a")
-        ehyb_only = [] #['cj0181', 'cj0264c', 'cj1324']
         if len(false_negative) > 0 or len(false_positive) > 0:
             short_file.write('\n' + '\n' + file_name)
             if len(false_negative) > 0:
@@ -290,7 +291,7 @@ def create_short_val_results(forward_primers, reverse_primers, amplicon_sequence
         short_file.close()
 
 
-def create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, per_gene_file, lab_binary_results):
+def create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, per_gene_file, lab_binary_results, ehyb_only):
 
     file = open(lab_binary_results, "r")
 
@@ -369,8 +370,6 @@ def create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db
         binary_tree_attrib.insert(68, 'pcr_distance')
         for i in range(69, 139):
             binary_tree_attrib.insert(i, None)
-
-        ehyb_only = [] #['cj0181', 'cj0264c', 'cj1324']
 
         for gene_name in false_negative:
             num_f_neg[gene_name] = num_f_neg[gene_name] + 1
@@ -455,7 +454,7 @@ def create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db
             gene_file.write('\n' + val)
     gene_file.close()
 
-def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, db_directory, long_file, med_file_f_neg, med_file_f_pos, lab_binary_results):
+def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, db_directory, long_file, med_file_f_neg, med_file_f_pos, lab_binary_results, ehyb_only):
     # file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
     # file = open("/home/sfisher/Sequences/11168_test_files/cgf40_results_modified.txt", "r")
     file = open(lab_binary_results, "r")
@@ -503,7 +502,7 @@ def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, 
         print_file = open(long_file, "a")
         file_name = file_path.partition(db_directory + "/")[2]
         cgf_predictions = CGFPrediction.ecgf(forward_primers, reverse_primers, file_path,
-                                                       amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict, True)
+                                             amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict, True)
         cgf_predictions_dict = cgf_predictions[0]
         all_hsp = cgf_predictions[1]
 
@@ -516,8 +515,8 @@ def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, 
         if len(false_positive) > 0 or len(false_negative) > 0:
             # print_file.write('\n' + file_name)
             print_file.write('\n' + '\n' + file_name+ '\n')
-            print_file.write('\n' + 'genes found'+ str(genes_found))
-            print_file.write('\n' + 'genes expected'+ str(genes_expected))
+            # print_file.write('\n' + 'genes found'+ str(genes_found))
+            # print_file.write('\n' + 'genes expected'+ str(genes_expected))
         if len(false_positive) > 0:
             print_file.write('\n' + 'false positive'+ str(false_positive))
         if len(false_negative) > 0:
@@ -539,7 +538,6 @@ def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, 
         for i in range(69, 139):
             binary_tree_attrib.insert(i, None)
 
-        ehyb_only = [] #['cj0181', 'cj0264c', 'cj1324']
         for gene_name in false_negative:
             cases = defaultdict(int)
             hi_bsr = 0
@@ -560,7 +558,7 @@ def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, 
                     print_file.write('\n' + gene_name + ' found with bsr: '+ str(hsp.bsr))
                     cases[result] += 1
                     if result == 6:
-                        print_file.write('\n' + 'CASE 6:' + gene_name + ' not found using eCGF with both primers so one primer'
+                        print_file.write('\n' + 'CASE 6: ' + gene_name + ' not found using eCGF with both primers so one primer'
                                                 'searched for with EHYBRID ' + '(' + str(hsp.ehybrid) +') not found of long enough length (len=' + str(hsp.length) + ")")
                         print_file.write('\n' + 'HSP attr: ' + str(hsp.__dict__))
                     elif result == 10:
@@ -686,7 +684,6 @@ def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, 
         gc.collect()
 
         #TODO: debug... F+ not showing up!
-        ehyb_only = [] #['cj0181', 'cj0264c', 'cj1324']
 
         short_file = open(med_file_f_pos, "a")
         for gene_name in false_positive:
@@ -711,7 +708,9 @@ def create_long_causation(forward_primers, reverse_primers, amplicon_sequences, 
                             short_file.write('\n' + 'ONLY ONE PRIMER FOUND-')
                         elif gene_name in ehyb_only:
                             short_file.write('\n' + 'ONLY FOUND USING EHYB')
+                            short_file.write('\n' + '% id ' + str(hsp.identities / hsp.length))
                             print_file.write('\n' + 'ONLY FOUND USING EHYB')
+                            print_file.write('\n' + '% id ' + str(hsp.identities / hsp.length))
                         print_file.write('\n' + 'bsr' + str(hsp.bsr))
                         print_file.write('\n' + 'strand'+ str(hsp.strand))
                         print_file.write('\n' + 'query         '+ hsp.query)
@@ -756,14 +755,23 @@ if __name__ == "__main__":
     lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
 
     #Output text files
-    table_file = "/home/sfisher/Sequences/11168_test_files/tables/30_ecgf_table.txt"
-    short_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ecgf_short_expl.txt"
-    gene_file = '/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ecgf_expl_per_gene.txt'
-    long_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ecgf_full_expl.txt"
-    med_file_f_neg = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ecgf_short_expl_f_neg.txt"
-    med_file_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ecgf_short_expl_f_pos.txt"
+    table_file = "/home/sfisher/Sequences/11168_test_files/tables/1_ehybpercid-85.txt"
+    short_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_short_expl.txt"
+    gene_file = '/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_expl_per_gene.txt'
+    long_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/31_ehyb_full_expl_percid85.txt"
+    med_file_f_neg = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/31_ehyb_short_expl_f_neg_percid85.txt"
+    med_file_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/31_ehyb_short_expl_f_pos_percid85.txt"
 
-    # create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results)
-    # create_short_val_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, short_file, lab_binary_results)
-    # create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, gene_file, lab_binary_results)
-    create_long_causation(forward_primers, reverse_primers, amplicon_sequences, db_directory, long_file, med_file_f_neg, med_file_f_pos, lab_binary_results)
+    ehyb_only = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
+                 'cj0307',
+                 'cj0421c', 'cj0483', 'cj0486', 'cj0566', 'cj0569', 'cj0570', 'cj0625', 'cj0728', 'cj0733',
+                 'cj0736',
+                 'cj0755', 'cj0860', 'cj0967', 'cj1134', 'cj1136', 'cj1141', 'cj1294', 'cj1324', 'cj1329',
+                 'cj1334',
+                 'cj1427c', 'cj1431c', 'cj1439', 'cj1550c', 'cj1551', 'cj1552', 'cj1585', 'cj1679', 'cj1721',
+                 'cj1727c']
+
+    create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only)
+    # create_short_val_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, short_file, lab_binary_results, ehyb_only)
+    # create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, gene_file, lab_binary_results, ehyb_only)
+    # create_long_causation(forward_primers, reverse_primers, amplicon_sequences, db_directory, long_file, med_file_f_neg, med_file_f_pos, lab_binary_results, ehyb_only)

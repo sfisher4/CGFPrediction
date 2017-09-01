@@ -27,9 +27,14 @@ Prerequisites:
            To format multiple databases in a directory, type the following into a terminal:
            $makeblastdb -in /path/to/databases/directory/*.fasta; do /path/to/makeblastdb/installation/bin/makeblastdb -in $file -dbtype nucl
 
-
-** decision tree --> ValTree
+How to run:
 ** how to run
-** what is the output
+    ** github account?
+
+Result
+ - binary gene presence/absence data
+
+Validation Setting (Debug Option)
+- decision tree --> ValTree
+
 ** how to interpret validation data?
-** github account?
