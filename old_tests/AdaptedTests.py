@@ -149,8 +149,8 @@ class TestWithAmp(unittest.TestCase):
             reverse_blast_object = CGFPrediction.create_blastn_object(reverse_primers, file_path, r_out_file_path, True)
             full_blast_object = CGFPrediction.create_blastn_object(amplicon_sequences, file_path, full_out_file_path)
 
-            f_primer_dict = CGFPrediction.create_primer_dict(forward_primers)
-            r_primer_dict = CGFPrediction.create_primer_dict(reverse_primers)
+            f_primer_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+            r_primer_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
 
             if "contig" not in file_path:
                 if "cj0008" in file_path:
@@ -182,8 +182,8 @@ class TestWithAmp(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # contains primer id's and primer sequences
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_perfect_hit"
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
-        f_primer_dict = CGFPrediction.create_primer_dict(forward_primers)
-        r_primer_dict = CGFPrediction.create_primer_dict(reverse_primers)
+        f_primer_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+        r_primer_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
 
         files_paths = []
         for file in files:
@@ -302,8 +302,8 @@ class TestGeneAnnotationError(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+        r_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
 
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -340,8 +340,8 @@ class TestGeneAnnotationError(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+        r_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
 
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -373,8 +373,8 @@ class TestGeneAnnotationError(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+        r_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
 
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -433,8 +433,8 @@ class TestSNPPrimers(unittest.TestCase):
         forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_snp"
-        f_primer_dict = CGFPrediction.create_primer_dict(forward_primers)
-        r_primer_dict = CGFPrediction.create_primer_dict(reverse_primers)
+        f_primer_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+        r_primer_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
         files_paths = []
@@ -763,9 +763,9 @@ class TestContigTrunc(unittest.TestCase):
     def test_entire_gene(self):
         amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
         f_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
-        f_primers_dict = CGFPrediction.create_primer_dict(f_primers)
+        f_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(f_primers)
         r_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
-        r_primers_dict = CGFPrediction.create_primer_dict(r_primers)
+        r_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(r_primers)
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
 
@@ -1117,8 +1117,8 @@ class TestPCRDirectly(unittest.TestCase):
         reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
         db_directory = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_db"
         files = [file for file in os.listdir(db_directory) if file.endswith("fasta")]
-        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
-        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
+        f_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+        r_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
 
         files_paths = []
         for file in files:
@@ -1189,8 +1189,8 @@ class TestPCRDirectly(unittest.TestCase):
                     if f_hsp_object.contig_name == r_object.contig_name:
                         # f_hsp_object and r_hsp_object should be on the same contig
                         self.assertEqual(f_hsp_object.contig_name, r_object.contig_name)
-                        f_primers_dict = CGFPrediction.create_primer_dict(forward_primers)
-                        r_primers_dict = CGFPrediction.create_primer_dict(reverse_primers)
+                        f_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(forward_primers)
+                        r_primers_dict = CGFPrediction.create_dict_from_fasta_seqs(reverse_primers)
                         val = CGFPrediction.epcr(f_hsp_object, r_object, amplicon_sequences, f_primers_dict, r_primers_dict)
                         if "_51" in file_path:
                             self.assertFalse(val)

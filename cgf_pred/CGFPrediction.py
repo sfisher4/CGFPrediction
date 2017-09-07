@@ -20,14 +20,14 @@ E_VALUE_CUTOFF = 0.01   #for ehyb
 #other
 QCOV_HSP_PERC = 70      #for primers and ehyb on same contig
 WORD_SIZE = 7           #word size used for blastn
-PERC_ID_CUTOFF = 85     #for both primers and ehyb
+PERC_ID_CUTOFF = 80     #for both primers and ehyb
 
 #PROGRAM SPECIFIC VALUES
 MAX_MARGIN_BTWN_PRIMERS = 50    #max distance that can be +/- the correct distance between primers #TODO: switch to %?
 CUTOFF_GENE_LENGTH = 70         #cutoff gene length for ehyb
-SNP_THRESHOLD = 4               #4 bp must be an exact match with 3' end of primer
+SNP_THRESHOLD = 4               #5 bp must be an exact match with 3' end of primer
 MAX_AMP_PRIMER_ALIGN = 10       #The amount of bp's that can be different btwn the hsp primer and hsp amp when searching for ehyb on same or diff contigs
-MAX_PERC_EHYB_PRIMER_ENDS = 0.00
+MAX_PERC_EHYB_PRIMER_ENDS = 0.05
 MAX_PERC_END = 0.05             #Max percentage of amp_length that will consider a primer at end of contig.
 
 def blastn_query(query_genes, database, qcov, id):
@@ -117,7 +117,7 @@ def valid_strands(first_hsp_object: HSP, second_hsp_object: HSP) -> None :
             first_hsp_object.valid = False
             second_hsp_object.valid = False
 
-def create_primer_dict(primers):
+def create_dict_from_fasta_seqs(primers):
     """ Return a dictionary that contains primer sequences: key is the primer id and value is the primer sequence.
 
     :param primers: A fasta file containing primer sequences
@@ -307,53 +307,53 @@ def bsr(blast_object:Blastn, max_bits_dict:dict):
             blast_object.remove_hsp_object_all(hsp)
             assert hsp not in blast_object.hsp_objects
 
-def sga_ehybrid(lo_hsp_ehybrid):
-    """ Determines the genes in lo_hsp_ehybrid that are specified to only use ehyb
-
-    :param lo_hsp_ehybrid: A list of hsp that were found using ehybrid only
-    :return: dict containing hsp genes from lo_hsp_ehybrid that are specified to use ehyb only.
-    """
-
-    result_dict = defaultdict(list)
-    # ehyb_only = [] #['cj0421c', 'cj0246c', 'cj1294', 'cj1324', 'cj1427c', 'cj1721', 'cj1439', 'cj1552', 'cj1551'] #rm 0755, 'cj1334', 'cj1329'
-    for hsp in lo_hsp_ehybrid:
-        # for gene in ehyb_only:
-        #     if gene in hsp.name:
-                result_dict[hsp.name].append(hsp)
-    return result_dict
-
-#NOT used
-def sga_epcr(lo_hsp_epcr):
-    """ Determines the genes in lo_hsp_epcr that are specified to only use epcr
-
-    :param lo_hsp_epcr: A list of genes that were found using epcr only
-    :return: dict containing hsp genes from lo_hsp_epcr that are specified to use epcr only.
-    """
-
-    result_dict = defaultdict(list)
-    for hsp in lo_hsp_epcr:
-        # this is where I will determine the genes that only require epcr
-        #if "gene" in hsp.name:
-        result_dict[hsp.name].append(hsp)
-    return result_dict
-
-def sga(hsp_pass_ehyb:list, result_dict:dict):
-    """ Adds gene hsps to result dictionary that are found using the specific gene approach.
-
-    :param hsp_pass_ehyb: A list of gene hsp that were found using ehybrid only
-    :param result_dict: A dict containing results so far (to add results using ehyb only to)
-    :return: result dict with added results with only ehyb
-    """
-
-    ehyb_dict = sga_ehybrid(hsp_pass_ehyb)
-    for name, lo_hsp in ehyb_dict.items():
-        if name not in result_dict:
-            #found using ehybrid
-            if "11168_" in name:
-                result_dict[name[6:]].append(lo_hsp)
-            else:
-                result_dict[name].append(lo_hsp)
-    return result_dict
+# def sga_ehybrid(lo_hsp_ehybrid):
+#     """ Determines the genes in lo_hsp_ehybrid that are specified to only use ehyb
+#
+#     :param lo_hsp_ehybrid: A list of hsp that were found using ehybrid only
+#     :return: dict containing hsp genes from lo_hsp_ehybrid that are specified to use ehyb only.
+#     """
+#
+#     result_dict = defaultdict(list)
+#     # ehyb_only = [] #['cj0421c', 'cj0246c', 'cj1294', 'cj1324', 'cj1427c', 'cj1721', 'cj1439', 'cj1552', 'cj1551'] #rm 0755, 'cj1334', 'cj1329'
+#     for hsp in lo_hsp_ehybrid:
+#         # for gene in ehyb_only:
+#         #     if gene in hsp.name:
+#                 result_dict[hsp.name].append(hsp)
+#     return result_dict
+#
+# #NOT used
+# def sga_epcr(lo_hsp_epcr):
+#     """ Determines the genes in lo_hsp_epcr that are specified to only use epcr
+#
+#     :param lo_hsp_epcr: A list of genes that were found using epcr only
+#     :return: dict containing hsp genes from lo_hsp_epcr that are specified to use epcr only.
+#     """
+#
+#     result_dict = defaultdict(list)
+#     for hsp in lo_hsp_epcr:
+#         # this is where I will determine the genes that only require epcr
+#         #if "gene" in hsp.name:
+#         result_dict[hsp.name].append(hsp)
+#     return result_dict
+#
+# def sga(hsp_pass_ehyb:list, result_dict:dict):
+#     """ Adds gene hsps to result dictionary that are found using the specific gene approach.
+#
+#     :param hsp_pass_ehyb: A list of gene hsp that were found using ehybrid only
+#     :param result_dict: A dict containing results so far (to add results using ehyb only to)
+#     :return: result dict with added results with only ehyb
+#     """
+#
+#     ehyb_dict = sga_ehybrid(hsp_pass_ehyb)
+#     for name, lo_hsp in ehyb_dict.items():
+#         if name not in result_dict:
+#             #found using ehybrid
+#             if "11168_" in name:
+#                 result_dict[name[6:]].append(lo_hsp)
+#             else:
+#                 result_dict[name].append(lo_hsp)
+#     return result_dict
 
 def contig_copy(f_hsp_old, r_hsp_old, max_f_bits_dict, max_r_bits_dict, contig) -> list:
     """ Renders a copy of f_hsp_old and r_hsp_old and assigns attributes for when both primers are found.
@@ -599,8 +599,8 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     :param max_amp_bits_dict: dict containing max bits for each of the amplicon sequences in the amp_sequences file.
     :param debug: An debug option that returns all hits that failed in the program.
     :restrictions: fasta files in database must be formatted using makeblastdb.
-    :return: debug=False: A list containing the binary gene presence/absence dictionary
-             debug=True: A list containing the binary gene presence/absence dictionary and all the hits that failed in the program.
+    :return: debug=False: A list containing a dictionary of gene found (key = hsp.name, val = hsp)
+             debug=True: A list containing a dictionary of genes found and all the hits that failed in the program.
     """
 
     # forward_blast = create_blastn_object(forward_primers, database, forward_out_file, True)
@@ -610,12 +610,13 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     reverse_blast_bsr = create_blastn_bsr_object(reverse_primers, database)
     blast_object = create_blastn_object(amp_sequences, database)
     full_blast_qcov = create_blastn_object(amp_sequences, database, True)
-    full_blast_qcov_id = create_blastn_object(amp_sequences, database, True, 85)
+    ehyb_blast = create_blastn_object(amp_sequences, database, False, 70)
 
     bsr(forward_blast_bsr, max_f_bits_dict)
     bsr(reverse_blast_bsr, max_r_bits_dict)
-    dict_f_primers = create_primer_dict(forward_primers)
-    dict_r_primers = create_primer_dict(reverse_primers)
+    dict_f_primers = create_dict_from_fasta_seqs(forward_primers)
+    dict_r_primers = create_dict_from_fasta_seqs(reverse_primers)
+    dict_amp = create_dict_from_fasta_seqs(amplicon_sequences)
 
     lo_tup_same_queries = [(f_hsp,r_hsp) for f_hsp in forward_blast_bsr.hsp_objects for r_hsp in reverse_blast_bsr.hsp_objects if f_hsp.name == r_hsp.name]
     lo_tup_same_contig = [tup for tup in lo_tup_same_queries if tup[0].contig_name == tup[1].contig_name]
@@ -700,21 +701,109 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     for k,v in results_one_primer.items():
         result_dict[k].append(v)
 
-    #specific gene approach
-    #TODO: commented out!!!
-    lo_hsp_ehybrid_qcov = ehyb(full_blast_qcov_id)  # assigns ehybrid attributes to each hsp from amp vs db
-    ehybrid_qcov_pass = [hsp for hsp in lo_hsp_ehybrid_qcov if hsp.ehybrid == True]
-    result_dict = sga(ehybrid_qcov_pass, result_dict) #add genes that are found using sga if not already found.
+    #CASE 4:
+    lo_hsp_ehybrid = ehyb(ehyb_blast)  # assigns ehybrid attributes to each hsp from amp vs db
+    ehybrid_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
+    ehyb_pos = [hsp for hsp in ehybrid_pass if hsp.name[6:] not in result_dict.keys()]
+    fourth_case_check(ehyb_pos, result_dict, dict_f_primers, dict_r_primers, dict_amp)
+    # result_dict = sga(ehybrid_qcov_pass, result_dict) #add genes that are found using sga if not already found.
 
     if debug == True:
         results_list = [result_dict, all_hsp]
     else:
-        results_list = [result_dict]
+        #TODO: remove ehyb_pos from here... I added it for testing.
+        results_list = [result_dict, ehyb_pos]
 
     # print('epcr only results', epcr_only_results)
     #TODO !!! comment out for multiprocessing
     return results_list
     # output.put(result_dict)
+
+def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_dict):
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/7_trial", "a")
+    ehyb_pos_names = [hsp.name[6:] for hsp in ehyb_pos]
+    file.write('\n \n Genes not found using eCGF but found using eHYB ' + str(ehyb_pos_names))
+    file.write('\n Number of genes found in eHYB only ' + str(len(ehyb_pos)))
+    file.write('\n Number of genes found using eCGF (Probability of being TRULY +ve is ~high) '+ str(len(result_dict.keys())))
+    file.write('\n Number of genes not found at all (Probability of being TRULY -ve is high) '+ str(abs(40 - len(result_dict.keys()) - len(ehyb_pos))))
+    file.write('\n Below is more info on the genes found using eHYB only (was -ve in eCGF but +ve in eHYB): ')
+    for hsp in ehyb_pos:
+        hsp_name = hsp.name[6:]
+        perc_id = hsp.identities / hsp.length
+        file.write('\n \n' + hsp_name)
+        file.write('\n % id ' + str(perc_id))
+        file.write('\n qcov (% of query seqn that overlaps sbjct seqn) ' + str(len(hsp.query) / (len(amp_dict[hsp.name]) + 1)))
+        file.write('\n Entire Query Seq      ' + str(len(amp_dict[hsp.name]) + 1) + " 1 " + str(len(amp_dict[hsp.name])) + " " + str(amp_dict[hsp.name]))
+        file.write('\n Matching Query Seq    ' + str(len(hsp.query)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.query)
+        file.write('\n Matching Sbjct Seq    ' + str(len(hsp.sbjct)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.sbjct)
+        file.write('\n Forward primer         ' + str(len(f_primer_dict[hsp_name])) + "       " + str(f_primer_dict[hsp_name]))
+        file.write('\n Reverse primer         ' + str(len(r_primer_dict[hsp_name])) + " "*(len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]) + 7) + str(amp_dict[hsp.name][len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]): ] ))
+
+        # if (len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+        file.write('\n Forward Primer qcov: ' +  str((len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name])) + " (CUTOFF: " + str((QCOV_HSP_PERC / 100)) + " )")
+        # if (len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+        file.write('\n Reverse Primer qcov: ' + str((len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name])) + " (CUTOFF:  " + str((QCOV_HSP_PERC / 100)) + " )")
+        # if perc_id * 100 < PERC_ID_CUTOFF:
+        file.write('\n Perc ID for ehyb in eCGF: '+ str(perc_id) + " (CUTOFF: " + str((PERC_ID_CUTOFF / 100)) + " )")
+    file.close()
+
+    # ehyb_pos_names = [hsp.name[6:] for hsp in ehyb_pos]
+    # print('\nGenes not found using eCGF but found using eHYB', ehyb_pos_names)
+    # print('Number of genes found in eHYB only', len(ehyb_pos))
+    # print('Number of genes found using eCGF (Probability of being TRULY +ve is ~high)', len(result_dict.keys()))
+    # print('Number of genes not found at all (Probability of being TRULY -ve is high)', abs(40 - len(result_dict.keys()) - len(ehyb_pos)))
+    # print('Below is more info on the genes found using eHYB only (was -ve in eCGF but +ve in eHYB): ')
+    # for hsp in ehyb_pos:
+    #     hsp_name = hsp.name[6:]
+    #     perc_id = hsp.identities / hsp.length
+    #     print('\n', hsp_name)
+    #     print('% id', perc_id)
+    #     print('qcov (% of query seqn that overlaps sbjct seqn)', str(len(hsp.query) / (len(amp_dict[hsp.name]) + 1)))
+    #     print('Entire Query Seq      ', len(amp_dict[hsp.name]) + 1, "1 ", len(amp_dict[hsp.name]), amp_dict[hsp.name])
+    #     print('Matching Query Seq    ', len(hsp.query) , hsp.query_start, hsp.query_end, " "*(hsp.query_start-1 + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))), hsp.query)
+    #     print('Matching Sbjct Seq    ', len(hsp.sbjct) , hsp.query_start, hsp.query_end, " "*(hsp.query_start-1 + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))), hsp.sbjct)
+    #     print('Forward primer        ', len(f_primer_dict[hsp_name]) , "       ", f_primer_dict[hsp_name])
+    #     print('Reverse primer        ', len(r_primer_dict[hsp_name]), " "*(len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]) + 7), amp_dict[hsp.name][len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]): ] )
+    #
+    #     if (len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+    #         print('Forward Primer qcov: ', (len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name]), " < ", (QCOV_HSP_PERC / 100))
+    #     if (len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+    #         print('Reverse Primer qcov: ', (len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name]), " < ", (QCOV_HSP_PERC / 100))
+    #     if perc_id * 100 < PERC_ID_CUTOFF:
+    #         print('Perc ID for ehyb in eCGF:', perc_id, " < ", (PERC_ID_CUTOFF / 100))
+
+def per_gene_fourth_case_check(all_ehyb_pos):
+
+    f_primer_dict = create_dict_from_fasta_seqs(forward_primers)
+    r_primer_dict = create_dict_from_fasta_seqs(reverse_primers)
+    amp_dict = create_dict_from_fasta_seqs(amplicon_sequences)
+    gene_ehyb_pos_dict = defaultdict(list)
+
+    for ehyb_pos in all_ehyb_pos.values():
+        for hsp in ehyb_pos:
+            gene_ehyb_pos_dict[hsp.name] = hsp
+
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/7_trial_per_gene", "a")
+    for gene_name, hsp in gene_ehyb_pos_dict.items():
+        hsp_name = hsp.name[6:]
+        perc_id = hsp.identities / hsp.length
+        file.write('\n \n' + hsp_name)
+        file.write('\n % id ' + str(perc_id))
+        file.write('\n qcov (% of query seqn that overlaps sbjct seqn) ' + str(len(hsp.query) / (len(amp_dict[hsp.name]) + 1)))
+        file.write('\n Entire Query Seq      ' + str(len(amp_dict[hsp.name]) + 1) + " 1 " + str(len(amp_dict[hsp.name])) + " " + str(amp_dict[hsp.name]))
+        file.write('\n Matching Query Seq    ' + str(len(hsp.query)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.query)
+        file.write('\n Matching Sbjct Seq    ' + str(len(hsp.sbjct)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.sbjct)
+        file.write('\n Forward primer         ' + str(len(f_primer_dict[hsp_name])) + "       " + str(f_primer_dict[hsp_name]))
+        file.write('\n Reverse primer         ' + str(len(r_primer_dict[hsp_name])) + " "*(len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]) + 7) + str(amp_dict[hsp.name][len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]): ] ))
+
+        # if (len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+        file.write('\n Forward Primer qcov: ' + str((len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name])) + " (CUTOFF: " + str((QCOV_HSP_PERC / 100)) + " )")
+        # if (len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+        file.write('\n Reverse Primer qcov: ' + str((len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name])) + " (CUTOFF:  " + str((QCOV_HSP_PERC / 100)) + " )")
+        # if perc_id * 100 < PERC_ID_CUTOFF:
+        file.write('\n Perc ID for ehyb in eCGF: ' + str(perc_id) + " (CUTOFF: " + str((PERC_ID_CUTOFF / 100)) + " )")
+
+    file.close()
 
 
 
@@ -736,7 +825,6 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     DB_process = subprocess.Popen(blastdb_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     DB_process.wait()
 
-
     #bsr
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
     r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
@@ -751,12 +839,18 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
         files_paths.append(os.path.abspath(db_fasta) + '/' + file)
     cgf_predictions_dict = {}
 
+    #TODO: added dict for testing
+    all_ehyb_pos = {}
+
     #TODO: comment out for multiprocessing!
     for file_path in files_paths:
         file_name = file_path.partition(db_fasta + "/")[2]
         result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
         cgf_predictions_dict[file_name] = result[0]
+        #TODO: delete below... added for testing:
+        all_ehyb_pos[file_name] = result[1]
 
+    per_gene_fourth_case_check(all_ehyb_pos)
     # multiprocessing
     # processes = [mp.Process(target=ecgf, args=(f_primers_fasta, r_primers_fasta, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
     # for p in processes:
@@ -775,29 +869,30 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     return cgf_predictions_dict
 
 
-
-if __name__ == "__main__":
-    # test_pcr_prediction = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction"
-    # test_bp_removed = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
-    # test_gene_annotation = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-    # test_contig_trunc = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
-    # test_valid_dir = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
-    # test_11168 = "/home/sfisher/Sequences/11168_complete_genome"
-    forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
-    reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
-    amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-    all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-    debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
-    multipro_tests = "/home/sfisher/Sequences/11168_test_files/multipro_tests"
-    # test_memory = "/home/sfisher/Sequences/11168_test_files/memory_trial"
-    # test_memory2 = "/home/sfisher/Sequences/11168_test_files/memory_trial2"
-    # test_cprofile_file = "/home/sfisher/Sequences/11168_test_files/memory_trial/06_2855.fasta"
-
-    #TODO: check for error for if makeblastdb hasn't been run and return an error message to the user indicating the error.
-
-    # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
-    cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
-    # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
+# TODO: Trying to use
+# if __name__ == "__main__":
+#     # test_pcr_prediction = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction"
+#     # test_bp_removed = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
+#     # test_gene_annotation = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
+#     # test_contig_trunc = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
+#     # test_valid_dir = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
+#     # test_11168 = "/home/sfisher/Sequences/11168_complete_genome"
+#     forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
+#     reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
+#     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+#     all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+#     debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
+#     multipro_tests = "/home/sfisher/Sequences/11168_test_files/multipro_tests"
+#     # test_memory = "/home/sfisher/Sequences/11168_test_files/memory_trial"
+#     # test_memory2 = "/home/sfisher/Sequences/11168_test_files/memory_trial2"
+#     # test_cprofile_file = "/home/sfisher/Sequences/11168_test_files/memory_trial/06_2855.fasta"
+#
+#     #TODO: check for error for if makeblastdb hasn't been run and return an error message to the user indicating the error.
+#
+#     main(all_genomes, forward_primers, reverse_primers, amplicon_sequences)
+#     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
+#     # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
+#     # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
 
 
 
