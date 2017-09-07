@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'my_project = my_project.__main__:main'
+            'eCGF = cgf_pred.__main__:main'
         ]
     },
 )
