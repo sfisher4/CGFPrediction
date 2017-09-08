@@ -43,7 +43,7 @@ def blastn_query1(query_genes, db, id=PERC_ID_CUTOFF, qcov=None, eval=10):
     DB_process.wait()
 
     blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
-                                             perc_identity=id, qcov_hsp_perc=qcov, evalue=eval)
+                                             perc_identity=id, qcov_hsp_perc=None, evalue=eval)
     stdout, stderr = blastn_cline()
     return stdout
 
