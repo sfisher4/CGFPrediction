@@ -39,6 +39,10 @@ def blastn_query(query_genes, database, qcov, id):
     :restrictions: Database is formatted using makeblastdb
     :return: stdout in xml format
     """
+
+    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(database)
+    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    DB_process.wait()
     if qcov == True:
         blastn_cline = NcbiblastnCommandline(query=query_genes, db=database, word_size=WORD_SIZE, outfmt=5,
                                              evalue=E_VALUE_CUTOFF, perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC)
@@ -57,6 +61,9 @@ def bs_blast(query_genes, db):
     :param db: A path to a Fasta file that contains the db that is being searched against.
     :return: stdout in xml format
     """
+    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    DB_process.wait()
     blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5, perc_identity=PERC_ID_CUTOFF, qcov_hsp_perc=QCOV_HSP_PERC) #, task='blastn-short')
     stdout, stderr = blastn_cline()
     return stdout
@@ -67,6 +74,9 @@ def max_bs_blast(seqn_dir):
     :param seqn_dir: A path to a Fasta file containing sequences to search for bits against itself
     :return: stdout in xml format
     """
+    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(seqn_dir)
+    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    DB_process.wait()
     blastn_cline = NcbiblastnCommandline(query=seqn_dir, db=seqn_dir, word_size=WORD_SIZE, outfmt=5, perc_identity=100, qcov_hsp_perc=100) #, task='blastn-short')
     stdout, stderr = blastn_cline()
     return stdout
@@ -80,6 +90,9 @@ def create_blastn_object(query_genes:str, database:str, qcov=False,id=PERC_ID_CU
     :restrictions: Database is formatted using makeblastdb
     :return: Blastn object
     """
+    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(database)
+    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    DB_process.wait()
     blastn_object = Blastn()
     stdout_xml = blastn_query(query_genes, database, qcov, id)
     blastn_object.create_blast_records(stdout_xml)
@@ -93,6 +106,9 @@ def create_blastn_bsr_object(query_genes, db):
     :param db: A path to a fasta file containing a single database
     :return: A blast object with initialized blast_records and hsp_records with cutoff bsr
     """
+    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    DB_process.wait()
     blastn_object = Blastn()
     stdout_xml = bs_blast(query_genes, db)
     blastn_object.create_blast_records(stdout_xml)
@@ -819,19 +835,6 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     :param amplicon_sequences: The fasta file location of the amplicon sequences
     :return: A dictionary
     """
-    #makeblastdb all inputs if not already done
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db_fasta)
-    blastfp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb_fp'.format(f_primers_fasta)
-    blastrp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb_rp'.format(r_primers_fasta)
-    blastamp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb_amp'.format(amp_fasta)
-    DB_process = subprocess.Popen(blastdb_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    DB_process.wait()
-    DB_process = subprocess.Popen(blastfp_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    DB_process.wait()
-    DB_process = subprocess.Popen(blastrp_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    DB_process.wait()
-    DB_process = subprocess.Popen(blastamp_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    DB_process.wait()
 
     #bsr
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
@@ -873,34 +876,28 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     # results = [pool.apply(ecgf, args=(f_primers_fasta, r_primers_fasta, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
     # print('results', results)
 
-    print(cgf_predictions_dict)
+    print('cgf dictionary', cgf_predictions_dict)
     return cgf_predictions_dict
 
 
 # TODO: Commented out so I could use as package in github. (running main from __main__.py
-# if __name__ == "__main__":
-#     # test_pcr_prediction = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction"
-#     # test_bp_removed = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
-#     # test_gene_annotation = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_gene_annotation_error"
-#     # test_contig_trunc = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_contig_trunc"
-#     # test_valid_dir = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_valid_dir"
-#     # test_11168 = "/home/sfisher/Sequences/11168_complete_genome"
-#     forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
-#     reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
-#     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-#     all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-#     debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
-#     multipro_tests = "/home/sfisher/Sequences/11168_test_files/multipro_tests"
-#     # test_memory = "/home/sfisher/Sequences/11168_test_files/memory_trial"
-#     # test_memory2 = "/home/sfisher/Sequences/11168_test_files/memory_trial2"
-#     # test_cprofile_file = "/home/sfisher/Sequences/11168_test_files/memory_trial/06_2855.fasta"
-#
-#     #TODO: check for error for if makeblastdb hasn't been run and return an error message to the user indicating the error.
-#
-#     main(all_genomes, forward_primers, reverse_primers, amplicon_sequences)
-#     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
-#     # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
-#     # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
+if __name__ == "__main__":
+    # forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
+    # reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
+    # amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+    # all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+    debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
+
+    forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
+    reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
+    amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
+
+
+
+    main(debug_cases, forward_primers, reverse_primers, amplicon_sequences)
+    # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
+    # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
+    # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
 
 
 
