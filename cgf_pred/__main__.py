@@ -21,7 +21,7 @@ def main(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("genomes", help="a path to a directory that contains fasta files for all genomes of interest", type=str)
     args=parser.parse_args()
-    CGFPrediction.main(args.genomes, all_fasta_files[1], all_fasta_files[2], amplicon_sequences)
+    CGFPrediction.main(args.genomes, forward_primers, reverse_primers, amplicon_sequences)
     # CGFPrediction.main(args.genomes, all_fasta_files[1], all_fasta_files[2], all_fasta_files[0])
 
 if __name__ == '__main__':
