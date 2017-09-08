@@ -32,7 +32,7 @@ def main(args=None):
                         help="a path to a directory that contains fasta files for all genomes of interest",
                         type=str)
     args=parser.parse_args()
-    CGFPrediction.main(args.genomes, paths[1], paths[2], paths[0])
+    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'])
     # CGFPrediction.main(args.genomes, all_fasta_files[1], all_fasta_files[2], all_fasta_files[0])
 
 if __name__ == '__main__':
