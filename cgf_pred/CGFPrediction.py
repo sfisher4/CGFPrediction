@@ -57,44 +57,6 @@ def blastn_query1(query_genes, db, qcov=False, evalue=False, id=PERC_ID_CUTOFF):
     stdout, stderr = blastn_cline()
     return stdout
 
-def blastn_query(query_genes, db, qcov, id):
-    """ Outputs stdout from a blastn query using eval, qcov if specified, perc iden, and wordsize in xml format.
-
-    :param query_genes: A path to a Fasta file w/ query genes
-    :param database: A path to a fasta file that contains the database that is being searched against
-    :param out_file: A xml file that the blastn query
-    :restrictions: Database is formatted using makeblastdb
-    :return: stdout in xml format
-    """
-
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    DB_process.wait()
-    if qcov == True:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
-                                             evalue=E_VALUE_CUTOFF, perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC)
-
-    else:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
-                                             evalue=E_VALUE_CUTOFF, perc_identity=id)
-    stdout, stderr = blastn_cline()
-    return stdout
-
-
-def bs_blast(query_genes, db):
-    """ Outputs stdout from blastn in xml format using only perc id and word size
-
-    :param query_genes: A path to a Fasta file w/ query genes
-    :param db: A path to a Fasta file that contains the db that is being searched against.
-    :return: stdout in xml format
-    """
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    DB_process.wait()
-    blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5, perc_identity=PERC_ID_CUTOFF, qcov_hsp_perc=QCOV_HSP_PERC) #, task='blastn-short')
-    stdout, stderr = blastn_cline()
-    return stdout
-
 def max_bs_blast(seqn_dir):
     """ Outputs stdout from blastn in xml format using 100% id
 
@@ -117,11 +79,11 @@ def create_blastn_object(query_genes:str, db:str, qcov=False,id=PERC_ID_CUTOFF) 
     :restrictions: Database is formatted using makeblastdb
     :return: Blastn object
     """
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    DB_process.wait()
+    # blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+    # DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # DB_process.wait()
     blastn_object = Blastn()
-    stdout_xml = blastn_query1(query_genes, db, qcov=qcov, id=id) #TODO: blastn_query
+    stdout_xml = blastn_query1(query_genes, db, qcov=qcov, id=id) #TODO: CHANGED FROM blastn_query
     blastn_object.create_blast_records(stdout_xml)
     blastn_object.create_hsp_objects(query_genes)
     return blastn_object
@@ -133,11 +95,11 @@ def create_blastn_bsr_object(query_genes, db):
     :param db: A path to a fasta file containing a single database
     :return: A blast object with initialized blast_records and hsp_records with cutoff bsr
     """
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    DB_process.wait()
+    # blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+    # DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # DB_process.wait()
     blastn_object = Blastn()
-    stdout_xml = blastn_query1(query_genes, db, qcov=True) #TODO: bs_blast
+    stdout_xml = blastn_query1(query_genes, db, qcov=True) #TODO: CHANGED FROM bs_blast
     blastn_object.create_blast_records(stdout_xml)
     blastn_object.create_hsp_objects(query_genes)
     return blastn_object
@@ -153,7 +115,8 @@ def valid_strands(first_hsp_object: HSP, second_hsp_object: HSP) -> None :
     """
 
     if first_hsp_object.name == second_hsp_object.name:
-        if (first_hsp_object.strand or second_hsp_object.strand) and not (first_hsp_object.strand and second_hsp_object.strand):
+        if (first_hsp_object.strand or second_hsp_object.strand) \
+                and not (first_hsp_object.strand and second_hsp_object.strand):
             first_hsp_object.valid = True
             second_hsp_object.valid = True
         else:
@@ -259,7 +222,8 @@ def valid_dir(hsp: HSP):
     :param hsp: A HSP object
     :return: None
     """
-    if not (abs((hsp.start + hsp.amp_len) - hsp.db_length - 1) <= (MAX_PERC_END * hsp.amp_len) and abs(hsp.start - hsp.amp_len) <= (MAX_PERC_END * hsp.amp_len)):
+    if not (abs((hsp.start + hsp.amp_len) - hsp.db_length - 1) <= (MAX_PERC_END * hsp.amp_len)
+            and abs(hsp.start - hsp.amp_len) <= (MAX_PERC_END * hsp.amp_len)):
         if hsp.strand and abs((hsp.start + hsp.amp_len) - hsp.db_length - 1) <= (MAX_PERC_END * hsp.amp_len):
             hsp.location = True
             hsp.end_dist = abs((hsp.start + hsp.amp_len) - hsp.db_length - 1)
@@ -440,8 +404,10 @@ def ehyb_both_prim_found(blast, f_hsp, r_hsp):
 
     for hsp in ehybrid_qcov_pass:
         # if f_hsp.name in hsp.name and r_hsp.name == hsp.name:
-        if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
-                or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+        if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                 and f_hsp.contig_name == hsp.contig_name:
             f_hsp.ehybrid, r_hsp.ehybrid = True, True
             f_hsp.amp_len, r_hsp.amp_len = hsp.length, hsp.length
@@ -449,8 +415,10 @@ def ehyb_both_prim_found(blast, f_hsp, r_hsp):
             f_hsp.amp_query, r_hsp.amp_query = hsp.query, hsp.query
     for hsp in ehybrid_qcov_fail:
         # if f_hsp.name in hsp.name and r_hsp.name in hsp.name:
-        if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
-                or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+        if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                 and r_hsp.contig_name == hsp.contig_name:
             f_hsp.ehybrid, r_hsp.ehybrid = False, False
             f_hsp.amp_len, r_hsp.amp_len = hsp.length, hsp.length
@@ -523,26 +491,30 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
         for hsp in ehybrid_hsp_pass:
         # consider depending on strand !!! ie. which direction the primer is facing!!!
             if f_hsp.strand and not r_hsp.strand:
-                if f_hsp.start == hsp.start or f_hsp.end == hsp.end and f_hsp.contig_name == hsp.contig_name:
+                if f_hsp.start == hsp.start or f_hsp.end == hsp.end \
+                        and f_hsp.contig_name == hsp.contig_name:
                     f_hsp.ehybrid = True
                     f_hsp.amp_len = hsp.length
                     valid_dir(f_hsp)
                     f_hsp.amp_sbjct = hsp.sbjct
                     f_hsp.amp_query = hsp.query
-                if r_hsp.start == hsp.end or r_hsp.end == hsp.start and r_hsp.contig_name == hsp.contig_name and not r_hsp.strand:
+                if r_hsp.start == hsp.end or r_hsp.end == hsp.start \
+                        and r_hsp.contig_name == hsp.contig_name and not r_hsp.strand:
                     r_hsp.ehybrid = True
                     r_hsp.amp_len = hsp.length
                     valid_dir(r_hsp)
                     r_hsp.amp_sbjct = hsp.sbjct
                     r_hsp.amp_query = hsp.query
             else:
-                if r_hsp.start == hsp.start or r_hsp.end == hsp.end and r_hsp.contig_name == hsp.contig_name and r_hsp.strand:
+                if r_hsp.start == hsp.start or r_hsp.end == hsp.end \
+                        and r_hsp.contig_name == hsp.contig_name and r_hsp.strand:
                     r_hsp.ehybrid = True
                     r_hsp.amp_len = hsp.length
                     valid_dir(r_hsp)
                     r_hsp.amp_sbjct = hsp.sbjct
                     r_hsp.amp_query = hsp.query
-                if f_hsp.start == hsp.end or f_hsp.end == hsp.start and f_hsp.contig_name == hsp.contig_name and not f_hsp.strand:
+                if f_hsp.start == hsp.end or f_hsp.end == hsp.start \
+                        and f_hsp.contig_name == hsp.contig_name and not f_hsp.strand:
                     f_hsp.ehybrid = True
                     f_hsp.amp_len = hsp.length
                     valid_dir(r_hsp)
@@ -563,13 +535,15 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
             #     result_dict[r_hsp.name].append((None, r_hsp))
                 # assert len(result_dict[f_hsp.name]) < 3
         for hsp in ehybrid_hsp_fail:
-            if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+            if abs(f_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                    or abs(f_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                     and f_hsp.contig_name == hsp.contig_name:
                 f_hsp.ehybrid = False
                 f_hsp.amp_len = hsp.length
                 f_hsp.amp_query = hsp.query
                 f_hsp.amp_sbjct = hsp.sbjct
-            if abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+            if abs(r_hsp.start - hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
+                    or abs(r_hsp.end - hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * hsp.length) \
                     and r_hsp.contig_name == hsp.contig_name:
                 r_hsp.ehybrid = False
                 r_hsp.amp_len = hsp.length
@@ -604,7 +578,9 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
         single_hsp.contig = False
 
         for blast_hsp in ehybrid_hsp_pass:
-            if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) and single_hsp.contig_name == blast_hsp.contig_name:
+            if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or \
+                                    abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) \
+                            and single_hsp.contig_name == blast_hsp.contig_name:
                 # f_hsp.amp_found = True
                 single_hsp.ehybrid = True
                 single_hsp.amp_len = blast_hsp.length
@@ -616,7 +592,9 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
                     # print(single_hsp.name, 'added b/c of single primer found')
                     assert len(result_dict[single_hsp.name]) < 2
         for blast_hsp in ehybrid_hsp_fail:
-            if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) and single_hsp.contig_name == blast_hsp.contig_name:
+            if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or \
+                                    abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) \
+                            and single_hsp.contig_name == blast_hsp.contig_name:
                 # f_hsp.amp_found = True
                 single_hsp.ehybrid = False
                 single_hsp.amp_len = blast_hsp.length
@@ -675,8 +653,6 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     all_hsp_same_contig = {}
     if debug == True:
         all_hsp_same_contig = same_contig[1]
-
-    # print('same contig results', results_dict_same_contig)
 
     #doesn't look for genes on different contigs if they were already found on same contig
     lo_tup_diff_contig = [tup for tup in lo_tup_same_queries if tup not in lo_tup_same_contig and tup[0].name not in results_dict_same_contig]
@@ -886,7 +862,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
 
     #TODO: comment out for multiprocessing!
     for file_path in files_paths:
-        #TODO: !!!!!!!!!!!!!!!!!!!!
+        #TODO: This was changed from file_path.partition(db_fasta + "/")[2] to Path(file_path).stem... if there are problems this could be a cause!
         print(file_path)
         # file_name = file_path.partition(db_fasta + "/")[2]
         file_name = Path(file_path).stem
