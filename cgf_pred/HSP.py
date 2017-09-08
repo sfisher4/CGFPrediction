@@ -35,7 +35,10 @@ class HSP(Results):
 
     def __init__(self, name):
         super(HSP, self).__init__(name)
-        self.name = name
+        if '11168_' in name:
+            self.name = name
+        else:
+            self.name = '11168_' + name
         self.expect = -1
         self.start = -1 #not possible to have a start or end that starts at -1
         self.end = -1   #not possible to have a start or end that starts at -1
