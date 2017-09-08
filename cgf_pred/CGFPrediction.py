@@ -882,7 +882,8 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
 
     print('cgf dictionary', cgf_predictions_dict)
     for val in cgf_predictions_dict.values():
-        print(val)
+        for key in val:
+            print(key)
     return cgf_predictions_dict
 
 
