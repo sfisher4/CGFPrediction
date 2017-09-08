@@ -14,14 +14,17 @@ def main(args=None):
     all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
 
     DATA_PATH = pkg_resources.resource_filename('cgf_pred', 'fastas/')
-    all_fasta_files = glob(DATA_PATH + '*.fasta')
+    DB_FILE_AMP = pkg_resources.resource_filename('cgf_pred', 'fastas/amp_seq.fasta')
+    DB_FILE_FP = pkg_resources.resource_filename('cgf_pred', 'fastas/f_primers.fasta')
+    DB_FILE_RP = pkg_resources.resource_filename('cgf_pred', 'fastas/r_primers.fasta')
+    # all_fasta_files = glob(DATA_PATH + '*.fasta')
 
     if args is None:
         args = sys.argv[1: ]
     parser = argparse.ArgumentParser()
     parser.add_argument("genomes", help="a path to a directory that contains fasta files for all genomes of interest", type=str)
     args=parser.parse_args()
-    CGFPrediction.main(args.genomes, forward_primers, reverse_primers, amplicon_sequences)
+    CGFPrediction.main(args.genomes, DB_FILE_FP, DB_FILE_RP, DB_FILE_AMP)
     # CGFPrediction.main(args.genomes, all_fasta_files[1], all_fasta_files[2], all_fasta_files[0])
 
 if __name__ == '__main__':
