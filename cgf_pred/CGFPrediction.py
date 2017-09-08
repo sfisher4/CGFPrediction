@@ -304,8 +304,10 @@ def bsr(blast_object:Blastn, max_bits_dict:dict):
     """
 
     for hsp in blast_object.hsp_objects:
-        print('!!!', hsp.name)
-        hsp.bsr = hsp.bits / max_bits_dict[hsp.name]
+        if '11168_' in hsp.name:
+            hsp.bsr = hsp.bits / max_bits_dict[hsp.name[6:]]
+        else:
+            hsp.bsr = hsp.bits / max_bits_dict[hsp.name]
         if hsp.bsr < MIN_BSR:
             # assert hsp in blast_object.hsp_objects
 
