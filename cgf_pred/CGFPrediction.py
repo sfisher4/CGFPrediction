@@ -141,7 +141,11 @@ def create_dict_from_fasta_seqs(primers):
     """
     primer_dict = {}
     for primer in SeqIO.parse(primers, "fasta"):
-        primer_dict[primer.id] = primer.seq
+        if '11168_' not in primer.id:
+            primer_dict['11168_' + primer.id] = primer.seq
+        else:
+            primer_dict[primer.id] = primer.seq
+
     return primer_dict
 
 def is_distance(f_hsp_object, r_hsp_object, amplicon_sequences):
