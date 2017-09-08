@@ -881,27 +881,29 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     # print('results', results)
 
     print('cgf dictionary', cgf_predictions_dict)
+    for val in cgf_predictions_dict.values():
+        print(val)
     return cgf_predictions_dict
 
 
 # TODO: Commented out so I could use as package in github. (running main from __main__.py
-# if __name__ == "__main__":
-#     # forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
-#     # reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
-#     # amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-#     # all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-#     debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
-#
-#     forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
-#     reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
-#     amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
-#
-#
-#
-#     main(debug_cases, forward_primers, reverse_primers, amplicon_sequences)
-#     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
-#     # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
-#     # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
+if __name__ == "__main__":
+    # forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta" #fasta file with primer id's and primer sequences
+    # reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta" #fasta file with primer id's and primer sequences
+    # amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+    # all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+    debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes"
+
+    forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
+    reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
+    amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
+
+
+
+    main(debug_cases, forward_primers, reverse_primers, amplicon_sequences)
+    # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
+    # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
+    # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
 
 
 
