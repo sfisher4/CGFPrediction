@@ -8,8 +8,8 @@ import subprocess
 
 def main(args=None):
 
-    # forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # fasta file with primer id's and primer sequences
-    # reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # fasta file with primer id's and primer sequences
+    forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"  # fasta file with primer id's and primer sequences
+    reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"  # fasta file with primer id's and primer sequences
     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
     all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
 
