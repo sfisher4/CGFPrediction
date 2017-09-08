@@ -880,7 +880,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     for file_path in files_paths:
         print(file_path)
         # file_name = file_path.partition(db_fasta + "/")[2]
-        file_name = file_path.stem
+        file_name = Path(file_path).stem
         print(file_name)
         result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
         cgf_predictions_dict[file_name] = result[0]
