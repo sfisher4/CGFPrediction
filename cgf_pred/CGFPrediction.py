@@ -11,6 +11,7 @@ from Bio.Seq import Seq
 
 from cgf_pred.Blastn import Blastn
 from cgf_pred.HSP import HSP
+from pathlib import Path
 
 #BLASTN LIMITATIONS
 #db vs primer
