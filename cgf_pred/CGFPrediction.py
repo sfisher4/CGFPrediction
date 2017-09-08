@@ -32,7 +32,7 @@ MAX_PERC_EHYB_PRIMER_ENDS = 0.05
 MAX_PERC_END = 0.05             #Max percentage of amp_length that will consider a primer at end of contig.
 
 #TODO: this assumes the qcov default value for: eval, qcov are none for blastn
-def blastn_query1(query_genes, db, id=PERC_ID_CUTOFF, qcov=None, eval=10):
+def blastn_query1(query_genes, db, id=PERC_ID_CUTOFF, qcov=False, evalue=False):
 
     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
     DB_process = subprocess.Popen(blastdb_cmd,
@@ -42,8 +42,18 @@ def blastn_query1(query_genes, db, id=PERC_ID_CUTOFF, qcov=None, eval=10):
                                   stderr=subprocess.PIPE)
     DB_process.wait()
 
-    blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
-                                             perc_identity=id, qcov_hsp_perc=None, evalue=eval)
+    if qcov and evalue:
+        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+                                             perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC, evalue=E_VALUE_CUTOFF)
+    elif qcov:
+        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+                                             perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC)
+    elif evalue:
+        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+                                             perc_identity=id, evalue=E_VALUE_CUTOFF)
+    else:
+        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+                                             perc_identity=id)
     stdout, stderr = blastn_cline()
     return stdout
 
