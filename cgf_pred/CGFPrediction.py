@@ -288,6 +288,7 @@ def max_bs(file_dir:str) -> dict:
         blastn_obj.create_hsp_objects(file_path)
         assert len(blastn_obj.hsp_objects) == 1
         for hsp in blastn_obj.hsp_objects:
+            print(hsp.name)
             if '11168_' in hsp.name:
                 dict_bits[hsp.name[6:]] = hsp.bits
             else:
@@ -303,6 +304,7 @@ def bsr(blast_object:Blastn, max_bits_dict:dict):
     """
 
     for hsp in blast_object.hsp_objects:
+        print('!!!', hsp.name)
         hsp.bsr = hsp.bits / max_bits_dict[hsp.name]
         if hsp.bsr < MIN_BSR:
             # assert hsp in blast_object.hsp_objects
