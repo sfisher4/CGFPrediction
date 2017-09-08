@@ -720,7 +720,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     #CASE 4:
     lo_hsp_ehybrid = ehyb(ehyb_blast)  # assigns ehybrid attributes to each hsp from amp vs db
     ehybrid_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
-    ehyb_pos = [hsp for hsp in ehybrid_pass if hsp.name[6:] not in result_dict.keys()]
+    ehyb_pos = [hsp for hsp in ehybrid_pass if hsp.name not in result_dict.keys()]
     fourth_case_check(ehyb_pos, result_dict, dict_f_primers, dict_r_primers, dict_amp)
     # result_dict = sga(ehybrid_qcov_pass, result_dict) #add genes that are found using sga if not already found.
 
@@ -737,7 +737,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
 
 def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_dict):
     file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/8_per_genome_trial", "a")
-    ehyb_pos_names = [hsp.name[6:] for hsp in ehyb_pos]
+    ehyb_pos_names = [hsp.name for hsp in ehyb_pos]
     file.write('\n \n Genes not found using eCGF but found using eHYB ' + str(ehyb_pos_names))
     file.write('\n Number of genes found in eHYB only ' + str(len(ehyb_pos)))
     file.write('\n Number of genes found using eCGF (Probability of being TRULY +ve is ~high) '+ str(len(result_dict.keys())))
@@ -803,7 +803,7 @@ def per_gene_fourth_case_check(all_ehyb_pos, forward_primers, reverse_primers, a
     for gene_name, lo_hsp in gene_ehyb_pos_dict.items():
         file.write("\n \n  " + gene_name + " not found using eCGF but found using eHYB " + str(len(lo_hsp)) + " times.")
         for hsp in lo_hsp:
-            hsp_name = hsp.name[6:]
+            hsp_name = hsp.name
             perc_id = hsp.identities / hsp.length
             file.write('\n \n' + hsp_name)
             file.write('\n % id ' + str(perc_id))
