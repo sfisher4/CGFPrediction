@@ -64,9 +64,18 @@ def max_bs_blast(seqn_dir):
     :return: stdout in xml format
     """
     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(seqn_dir)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    DB_process = subprocess.Popen(blastdb_cmd,
+                                  shell=True,
+                                  stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
     DB_process.wait()
-    blastn_cline = NcbiblastnCommandline(query=seqn_dir, db=seqn_dir, word_size=WORD_SIZE, outfmt=5, perc_identity=100, qcov_hsp_perc=100) #, task='blastn-short')
+    blastn_cline = NcbiblastnCommandline(query=seqn_dir,
+                                         db=seqn_dir,
+                                         word_size=WORD_SIZE,
+                                         outfmt=5,
+                                         perc_identity=100,
+                                         qcov_hsp_perc=100) #, task='blastn-short')
     stdout, stderr = blastn_cline()
     return stdout
 
@@ -79,9 +88,6 @@ def create_blastn_object(query_genes:str, db:str, qcov=False,id=PERC_ID_CUTOFF) 
     :restrictions: Database is formatted using makeblastdb
     :return: Blastn object
     """
-    # blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    # DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # DB_process.wait()
     blastn_object = Blastn()
     stdout_xml = blastn_query1(query_genes, db, qcov=qcov, id=id) #TODO: CHANGED FROM blastn_query
     blastn_object.create_blast_records(stdout_xml)
@@ -95,9 +101,6 @@ def create_blastn_bsr_object(query_genes, db):
     :param db: A path to a fasta file containing a single database
     :return: A blast object with initialized blast_records and hsp_records with cutoff bsr
     """
-    # blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    # DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # DB_process.wait()
     blastn_object = Blastn()
     stdout_xml = blastn_query1(query_genes, db, qcov=True) #TODO: CHANGED FROM bs_blast
     blastn_object.create_blast_records(stdout_xml)
@@ -743,7 +746,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     # output.put(result_dict)
 
 def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_dict):
-    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/8_per_genome_trial", "a")
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/11_per_genome", "a")
     ehyb_pos_names = [hsp.name for hsp in ehyb_pos]
     file.write('\n \n Genes not found using eCGF but found using eHYB ' + str(ehyb_pos_names))
     file.write('\n Number of genes found in eHYB only ' + str(len(ehyb_pos)))
@@ -806,7 +809,7 @@ def per_gene_fourth_case_check(all_ehyb_pos, forward_primers, reverse_primers, a
         for hsp in ehyb_pos:
             gene_ehyb_pos_dict[hsp.name].append(hsp)
 
-    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/8_per_gene_trial", "a")
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/11_per_gene", "a")
     for gene_name, lo_hsp in gene_ehyb_pos_dict.items():
         file.write("\n \n  " + gene_name + " not found using eCGF but found using eHYB " + str(len(lo_hsp)) + " times.")
         for hsp in lo_hsp:
