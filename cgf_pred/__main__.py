@@ -19,8 +19,8 @@ def main(args=None):
     DB_FILE_RP = pkg_resources.resource_filename('cgf_pred', 'fastas/r_primers.fasta')
     print(type(DATA_PATH))
     # all_fasta_files = glob(DATA_PATH + '*.fasta')
-    paths = {fasta.stem: pkg_resources.resource_filename('cgf_pred', str(fasta))
-             for fasta in DATA_PATH.glob('*.fasta')}
+    paths = {fasta.stem: pkg_resources.resource_filename('cgf_pred', str(fasta.stem))
+             for fasta in Path(DATA_PATH).glob('*.fasta')}
     print(paths)
     for path in paths.values():
         print('path', path)
