@@ -821,10 +821,16 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     """
     #makeblastdb all inputs if not already done
     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db_fasta)
-    blastfp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(f_primers_fasta)
-    blastrp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(r_primers_fasta)
-    blastamp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(amp_fasta)
+    blastfp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb_fp'.format(f_primers_fasta)
+    blastrp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb_rp'.format(r_primers_fasta)
+    blastamp_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb_amp'.format(amp_fasta)
     DB_process = subprocess.Popen(blastdb_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    DB_process.wait()
+    DB_process = subprocess.Popen(blastfp_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    DB_process.wait()
+    DB_process = subprocess.Popen(blastrp_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    DB_process.wait()
+    DB_process = subprocess.Popen(blastamp_cmd,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     DB_process.wait()
 
     #bsr

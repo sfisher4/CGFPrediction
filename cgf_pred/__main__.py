@@ -15,14 +15,6 @@ def main(args=None):
 
     DATA_PATH = pkg_resources.resource_filename('cgf_pred', 'fastas/')
     all_fasta_files = glob(DATA_PATH + '*.fasta')
-    for fasta_file in all_fasta_files:
-        blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(fasta_file)
-        DB_process = subprocess.Popen(blastdb_cmd,
-                                      shell=True,
-                                      stdin=subprocess.PIPE,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE)
-        DB_process.wait()
 
     if args is None:
         args = sys.argv[1: ]
