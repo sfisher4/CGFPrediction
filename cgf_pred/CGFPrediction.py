@@ -616,7 +616,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     bsr(reverse_blast_bsr, max_r_bits_dict)
     dict_f_primers = create_dict_from_fasta_seqs(forward_primers)
     dict_r_primers = create_dict_from_fasta_seqs(reverse_primers)
-    dict_amp = create_dict_from_fasta_seqs(amplicon_sequences)
+    dict_amp = create_dict_from_fasta_seqs(amp_sequences)
 
     lo_tup_same_queries = [(f_hsp,r_hsp) for f_hsp in forward_blast_bsr.hsp_objects for r_hsp in reverse_blast_bsr.hsp_objects if f_hsp.name == r_hsp.name]
     lo_tup_same_contig = [tup for tup in lo_tup_same_queries if tup[0].contig_name == tup[1].contig_name]
@@ -720,7 +720,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     # output.put(result_dict)
 
 def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_dict):
-    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/7_trial", "a")
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/8_per_genome_trial", "a")
     ehyb_pos_names = [hsp.name[6:] for hsp in ehyb_pos]
     file.write('\n \n Genes not found using eCGF but found using eHYB ' + str(ehyb_pos_names))
     file.write('\n Number of genes found in eHYB only ' + str(len(ehyb_pos)))
@@ -772,7 +772,7 @@ def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_d
     #     if perc_id * 100 < PERC_ID_CUTOFF:
     #         print('Perc ID for ehyb in eCGF:', perc_id, " < ", (PERC_ID_CUTOFF / 100))
 
-def per_gene_fourth_case_check(all_ehyb_pos):
+def per_gene_fourth_case_check(all_ehyb_pos, forward_primers, reverse_primers, amplicon_sequences):
 
     f_primer_dict = create_dict_from_fasta_seqs(forward_primers)
     r_primer_dict = create_dict_from_fasta_seqs(reverse_primers)
@@ -781,27 +781,29 @@ def per_gene_fourth_case_check(all_ehyb_pos):
 
     for ehyb_pos in all_ehyb_pos.values():
         for hsp in ehyb_pos:
-            gene_ehyb_pos_dict[hsp.name] = hsp
+            gene_ehyb_pos_dict[hsp.name].append(hsp)
 
-    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/7_trial_per_gene", "a")
-    for gene_name, hsp in gene_ehyb_pos_dict.items():
-        hsp_name = hsp.name[6:]
-        perc_id = hsp.identities / hsp.length
-        file.write('\n \n' + hsp_name)
-        file.write('\n % id ' + str(perc_id))
-        file.write('\n qcov (% of query seqn that overlaps sbjct seqn) ' + str(len(hsp.query) / (len(amp_dict[hsp.name]) + 1)))
-        file.write('\n Entire Query Seq      ' + str(len(amp_dict[hsp.name]) + 1) + " 1 " + str(len(amp_dict[hsp.name])) + " " + str(amp_dict[hsp.name]))
-        file.write('\n Matching Query Seq    ' + str(len(hsp.query)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.query)
-        file.write('\n Matching Sbjct Seq    ' + str(len(hsp.sbjct)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.sbjct)
-        file.write('\n Forward primer         ' + str(len(f_primer_dict[hsp_name])) + "       " + str(f_primer_dict[hsp_name]))
-        file.write('\n Reverse primer         ' + str(len(r_primer_dict[hsp_name])) + " "*(len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]) + 7) + str(amp_dict[hsp.name][len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]): ] ))
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/8_per_gene_trial", "a")
+    for gene_name, lo_hsp in gene_ehyb_pos_dict.items():
+        file.write("\n \n  " + gene_name + " not found using eCGF but found using eHYB " + str(len(lo_hsp)) + " times.")
+        for hsp in lo_hsp:
+            hsp_name = hsp.name[6:]
+            perc_id = hsp.identities / hsp.length
+            file.write('\n \n' + hsp_name)
+            file.write('\n % id ' + str(perc_id))
+            file.write('\n qcov (% of query seqn that overlaps sbjct seqn) ' + str(len(hsp.query) / (len(amp_dict[hsp.name]) + 1)))
+            file.write('\n Entire Query Seq      ' + str(len(amp_dict[hsp.name]) + 1) + " 1 " + str(len(amp_dict[hsp.name])) + " " + str(amp_dict[hsp.name]))
+            file.write('\n Matching Query Seq    ' + str(len(hsp.query)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.query)
+            file.write('\n Matching Sbjct Seq    ' + str(len(hsp.sbjct)) + " " + str(hsp.query_start) + " " + str(hsp.query_end) + " "*(hsp.query_start + (7 - len(str(len(hsp.query))) - len(str(hsp.query_start)) - len(str(hsp.query_end)))) + hsp.sbjct)
+            file.write('\n Forward primer         ' + str(len(f_primer_dict[hsp_name])) + "       " + str(f_primer_dict[hsp_name]))
+            file.write('\n Reverse primer         ' + str(len(r_primer_dict[hsp_name])) + " "*(len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]) + 7) + str(amp_dict[hsp.name][len(amp_dict[hsp.name]) - len(r_primer_dict[hsp_name]): ] ))
 
-        # if (len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
-        file.write('\n Forward Primer qcov: ' + str((len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name])) + " (CUTOFF: " + str((QCOV_HSP_PERC / 100)) + " )")
-        # if (len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
-        file.write('\n Reverse Primer qcov: ' + str((len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name])) + " (CUTOFF:  " + str((QCOV_HSP_PERC / 100)) + " )")
-        # if perc_id * 100 < PERC_ID_CUTOFF:
-        file.write('\n Perc ID for ehyb in eCGF: ' + str(perc_id) + " (CUTOFF: " + str((PERC_ID_CUTOFF / 100)) + " )")
+            # if (len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+            file.write('\n Forward Primer qcov: ' + str((len(f_primer_dict[hsp_name]) - hsp.query_start + 1) / len(f_primer_dict[hsp_name])) + " (CUTOFF: " + str((QCOV_HSP_PERC / 100)) + " )")
+            # if (len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name]) < (QCOV_HSP_PERC / 100):
+            file.write('\n Reverse Primer qcov: ' + str((len(r_primer_dict[hsp_name]) - (len(amp_dict[hsp.name]) - hsp.query_end)) / len(r_primer_dict[hsp_name])) + " (CUTOFF:  " + str((QCOV_HSP_PERC / 100)) + " )")
+            # if perc_id * 100 < PERC_ID_CUTOFF:
+            file.write('\n Perc ID for ehyb in eCGF: ' + str(perc_id) + " (CUTOFF: " + str((PERC_ID_CUTOFF / 100)) + " )")
 
     file.close()
 
@@ -850,7 +852,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
         #TODO: delete below... added for testing:
         all_ehyb_pos[file_name] = result[1]
 
-    per_gene_fourth_case_check(all_ehyb_pos)
+    per_gene_fourth_case_check(all_ehyb_pos, f_primers_fasta, r_primers_fasta, amp_fasta)
     # multiprocessing
     # processes = [mp.Process(target=ecgf, args=(f_primers_fasta, r_primers_fasta, file_path, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)) for file_path in files_paths]
     # for p in processes:
@@ -869,7 +871,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     return cgf_predictions_dict
 
 
-# TODO: Trying to use
+# TODO: Commented out so I could use as package in github. (running main from __main__.py
 # if __name__ == "__main__":
 #     # test_pcr_prediction = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_pcr_prediction"
 #     # test_bp_removed = "/home/sfisher/Sequences/amplicon_sequences/individual_amp_seq/test_bp_removed"
