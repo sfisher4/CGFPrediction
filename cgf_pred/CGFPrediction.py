@@ -744,7 +744,7 @@ def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_d
     file.write('\n Number of genes not found at all (Probability of being TRULY -ve is high) '+ str(abs(40 - len(result_dict.keys()) - len(ehyb_pos))))
     file.write('\n Below is more info on the genes found using eHYB only (was -ve in eCGF but +ve in eHYB): ')
     for hsp in ehyb_pos:
-        hsp_name = hsp.name[6:]
+        hsp_name = hsp.name
         perc_id = hsp.identities / hsp.length
         file.write('\n \n' + hsp_name)
         file.write('\n % id ' + str(perc_id))
