@@ -20,7 +20,7 @@ def main(args=None):
     print(type(DATA_PATH))
     # all_fasta_files = glob(DATA_PATH + '*.fasta')
     paths = {fasta.stem: pkg_resources.resource_filename('cgf_pred', str(fasta))
-             for fasta in Path(DATA_PATH).glob('*.fasta')}
+             for fasta in DATA_PATH.glob('*.fasta')}
     print(paths)
     for path in paths.values():
         print('path', path)
