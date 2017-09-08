@@ -14,6 +14,7 @@ def main(args=None):
     all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
 
     DATA_PATH = pkg_resources.resource_filename('cgf_pred', 'fastas/')
+    print(DATA_PATH)
     DB_FILE_AMP = pkg_resources.resource_filename('cgf_pred', 'fastas/amp_seq.fasta')
     DB_FILE_FP = pkg_resources.resource_filename('cgf_pred', 'fastas/f_primers.fasta')
     DB_FILE_RP = pkg_resources.resource_filename('cgf_pred', 'fastas/r_primers.fasta')
