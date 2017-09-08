@@ -32,7 +32,7 @@ MAX_PERC_EHYB_PRIMER_ENDS = 0.05
 MAX_PERC_END = 0.05             #Max percentage of amp_length that will consider a primer at end of contig.
 
 #TODO: this assumes the qcov default value for: eval, qcov are none for blastn
-def blastn_query1(query_genes, db, id=PERC_ID_CUTOFF, qcov=False, evalue=False):
+def blastn_query1(query_genes, db, qcov=False, evalue=False, id=PERC_ID_CUTOFF):
 
     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
     DB_process = subprocess.Popen(blastdb_cmd,
@@ -57,45 +57,43 @@ def blastn_query1(query_genes, db, id=PERC_ID_CUTOFF, qcov=False, evalue=False):
     stdout, stderr = blastn_cline()
     return stdout
 
-
-
-def blastn_query(query_genes, db, qcov, id):
-    """ Outputs stdout from a blastn query using eval, qcov if specified, perc iden, and wordsize in xml format.
-
-    :param query_genes: A path to a Fasta file w/ query genes
-    :param database: A path to a fasta file that contains the database that is being searched against
-    :param out_file: A xml file that the blastn query
-    :restrictions: Database is formatted using makeblastdb
-    :return: stdout in xml format
-    """
-
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    DB_process.wait()
-    if qcov == True:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
-                                             evalue=E_VALUE_CUTOFF, perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC)
-
-    else:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
-                                             evalue=E_VALUE_CUTOFF, perc_identity=id)
-    stdout, stderr = blastn_cline()
-    return stdout
-
-
-def bs_blast(query_genes, db):
-    """ Outputs stdout from blastn in xml format using only perc id and word size
-
-    :param query_genes: A path to a Fasta file w/ query genes
-    :param db: A path to a Fasta file that contains the db that is being searched against.
-    :return: stdout in xml format
-    """
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    DB_process.wait()
-    blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5, perc_identity=PERC_ID_CUTOFF, qcov_hsp_perc=QCOV_HSP_PERC) #, task='blastn-short')
-    stdout, stderr = blastn_cline()
-    return stdout
+# def blastn_query(query_genes, db, qcov, id):
+#     """ Outputs stdout from a blastn query using eval, qcov if specified, perc iden, and wordsize in xml format.
+#
+#     :param query_genes: A path to a Fasta file w/ query genes
+#     :param database: A path to a fasta file that contains the database that is being searched against
+#     :param out_file: A xml file that the blastn query
+#     :restrictions: Database is formatted using makeblastdb
+#     :return: stdout in xml format
+#     """
+#
+#     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+#     DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     DB_process.wait()
+#     if qcov == True:
+#         blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+#                                              evalue=E_VALUE_CUTOFF, perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC)
+#
+#     else:
+#         blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+#                                              evalue=E_VALUE_CUTOFF, perc_identity=id)
+#     stdout, stderr = blastn_cline()
+#     return stdout
+#
+#
+# def bs_blast(query_genes, db):
+#     """ Outputs stdout from blastn in xml format using only perc id and word size
+#
+#     :param query_genes: A path to a Fasta file w/ query genes
+#     :param db: A path to a Fasta file that contains the db that is being searched against.
+#     :return: stdout in xml format
+#     """
+#     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+#     DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     DB_process.wait()
+#     blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5, perc_identity=PERC_ID_CUTOFF, qcov_hsp_perc=QCOV_HSP_PERC) #, task='blastn-short')
+#     stdout, stderr = blastn_cline()
+#     return stdout
 
 def max_bs_blast(seqn_dir):
     """ Outputs stdout from blastn in xml format using 100% id
@@ -123,7 +121,7 @@ def create_blastn_object(query_genes:str, db:str, qcov=False,id=PERC_ID_CUTOFF) 
     DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     DB_process.wait()
     blastn_object = Blastn()
-    stdout_xml = blastn_query1(query_genes, db, id, qcov)
+    stdout_xml = blastn_query1(query_genes, db, id, qcov) #TODO: blastn_query
     blastn_object.create_blast_records(stdout_xml)
     blastn_object.create_hsp_objects(query_genes)
     return blastn_object
@@ -139,7 +137,7 @@ def create_blastn_bsr_object(query_genes, db):
     DB_process = subprocess.Popen(blastdb_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     DB_process.wait()
     blastn_object = Blastn()
-    stdout_xml = bs_blast(query_genes, db)
+    stdout_xml = blastn_query1(query_genes, db, qcov=True) #TODO: bs_blast
     blastn_object.create_blast_records(stdout_xml)
     blastn_object.create_hsp_objects(query_genes)
     return blastn_object
