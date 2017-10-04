@@ -12,7 +12,6 @@ MIN_BSR = 0.7
 def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only):
     # file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
     # file = open("/home/sfisher/Sequences/11168_test_files/cgf40_results_modified.txt", "r")
-    file = open(lab_binary_results, "r")
 
     # bsr
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
@@ -22,14 +21,14 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
     max_r_bits_dict = CGFPrediction.max_bs(r_bs_primer_dir)
     max_amp_bits_dict = CGFPrediction.max_bs(amp_bs_dir)
 
-    lines = file.readlines()
-
     gene_list = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
                  'cj0307', 'cj0421c', 'cj0483', 'cj0486', 'cj0566', 'cj0569', 'cj0570', 'cj0625', 'cj0728',
                  'cj0733', 'cj0736', 'cj0755', 'cj0860', 'cj0967', 'cj1134', 'cj1136', 'cj1141', 'cj1294',
                  'cj1324', 'cj1329','cj1334','cj1427c', 'cj1431c', 'cj1439', 'cj1550c', 'cj1551', 'cj1552',
                  'cj1585', 'cj1679', 'cj1721','cj1727c']
 
+    file = open(lab_binary_results, "r")
+    lines = file.readlines()
     file_gene_dict = {}
     for line in lines:
         genes_found_list = []
@@ -42,7 +41,6 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
         # print(genes_found_list)
         file_gene_dict[line.split(None, 1)[0]] = genes_found_list
         # print(file_gene_dict)
-
     file.close()
 
     files = (file for file in os.listdir(db_directory) if file.endswith('.fasta'))
@@ -54,12 +52,12 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
         file_name = file_path.partition(db_directory + "/")[2]
         print(file_name)
         cgf_predictions = CGFPrediction.ecgf(forward_primers, reverse_primers, file_path,
-                                             amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)
+                                             amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict, file_gene_dict)
         cgf_predictions_dict = cgf_predictions[0]
         # print('dict', cgf_predictions_dict)
         assert file_name in file_gene_dict, "error: The db directory contains a file that does not have validation results in 'file'"
         genes_expected = file_gene_dict[file_name]
-        genes_found = [key for key in cgf_predictions_dict]
+        genes_found = [key[6:] for key in cgf_predictions_dict]
 
         false_positive = set(genes_found) - set(genes_expected)
         false_negative = set(genes_expected) - set(genes_found)
@@ -788,7 +786,7 @@ def per_gene_long_expl_f_pos(forward_primers, reverse_primers, amplicon_sequence
         # print_file = open(long_file, "a")
         file_name = genome_path.partition(db_directory + "/")[2]
         cgf_predictions = CGFPrediction.ecgf(forward_primers, reverse_primers, genome_path,
-                                             amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict,
+                                             amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict, file_gene_dict,
                                              True)
         cgf_predictions_dict = cgf_predictions[0]
         # all_hsp = cgf_predictions[1]
@@ -856,8 +854,6 @@ def per_gene_long_expl_f_pos(forward_primers, reverse_primers, amplicon_sequence
         # short_file.close()
     short_file = open(med_file_f_pos, "a")
     for gene_name, lo_tup in per_gene_dict.items():
-        if "11168_" in gene_name:
-            gene_name = gene_name[6:]
         short_file.write('\n' + gene_name)
         short_file.write('\n' + "# of F+: " + str(len(lo_tup)))
         for index, tup in enumerate(lo_tup):
@@ -894,13 +890,13 @@ if __name__ == "__main__":
     lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
 
     #Output text files
-    table_file = "/home/sfisher/Sequences/11168_test_files/tables/1_ehybpercid-85.txt"
+    table_file = "/home/sfisher/Sequences/11168_test_files/tables/delete_me2.txt"
     short_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_short_expl.txt"
     gene_file = '/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_expl_per_gene.txt'
     long_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_full_expl.txt"
     med_file_f_neg = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_short_f_neg.txt"
     med_file_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_short_f_pos.txt"
-    per_gene_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_trial2.txt"
+    per_gene_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/15_ecgf_f+_causes.txt"
 
     ehyb_only = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
                  'cj0307',
@@ -911,8 +907,8 @@ if __name__ == "__main__":
                  'cj1427c', 'cj1431c', 'cj1439', 'cj1550c', 'cj1551', 'cj1552', 'cj1585', 'cj1679', 'cj1721',
                  'cj1727c']
 
-    # create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only)
+    create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only)
     # create_short_val_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, short_file, lab_binary_results, ehyb_only)
     # create_gene_results(forward_primers, reverse_primers, amplicon_sequences, db_directory, gene_file, lab_binary_results, ehyb_only)
     # create_long_causation(forward_primers, reverse_primers, amplicon_sequences, db_directory, long_file, med_file_f_neg, med_file_f_pos, lab_binary_results, ehyb_only)
-    per_gene_long_expl_f_pos(forward_primers,reverse_primers,amplicon_sequences, db_directory, per_gene_f_pos, lab_binary_results, ehyb_only)
+    # per_gene_long_expl_f_pos(forward_primers,reverse_primers,amplicon_sequences, db_directory, per_gene_f_pos, lab_binary_results, ehyb_only)
