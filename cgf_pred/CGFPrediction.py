@@ -26,11 +26,11 @@ PERC_ID_CUTOFF = 80     #for both primers and ehyb
 #PROGRAM SPECIFIC VALUES
 MAX_MARGIN_BTWN_PRIMERS = 50    #max distance that can be +/- the correct distance between primers #TODO: switch to %?
 CUTOFF_GENE_LENGTH = 70         #cutoff gene length for ehyb
-SNP_THRESHOLD = 4               #5 bp must be an exact match with 3' end of primer
-MIN_SNP_HAM_DIST = 1
+SNP_THRESHOLD = 4               #SNP_THRESHOLD bp must be an exact match with 3' end of primer
+MIN_SNP_HAM_DIST = 3
 MAX_AMP_PRIMER_ALIGN = 10       #The amount of bp's that can be different btwn the hsp primer and hsp amp when searching for ehyb on same or diff contigs
 MAX_PERC_EHYB_PRIMER_ENDS = 0.05
-MAX_PERC_END = 0.10             #Max percentage of amp_length that will consider a primer at end of contig.
+MAX_PERC_END = 0.30             #Max percentage of amp_length that will consider a primer at end of contig.
 
 #TODO: this assumes the qcov default value for: eval, qcov are none for blastn
 def blastn_query1(query_genes, db, qcov=False, evalue=False, id=PERC_ID_CUTOFF):
@@ -109,12 +109,10 @@ def create_blastn_bsr_object(query_genes, db):
     return blastn_object
 
 def valid_strands(first_hsp_object: HSP, second_hsp_object: HSP) -> None :
-    """ Assigns valid attributes to first and second hsp object and modifies lo_first and lo_second hsp objects s.t. they only contain strands with the correct orientation to one another.
+    """ Assigns valid attributes to first and second hsp object.
 
     :param first_hsp_object: A HSP object to compare with second_hsp_object
     :param second_hsp_object: A HSP object to compare with first_hsp_object
-    :param lo_forward_hsp_objects: A list of hsp objects that was run using forward primer sets
-    :param lo_reverse_hsp_objects: A list of hsp objects that was run using reverse primer sets
     :return: None
     """
 
@@ -179,8 +177,17 @@ def epcr(forward_hsp_object:HSP, reverse_hsp_object:HSP, amplicon_sequences, f_p
     assert forward_hsp_object.valid == reverse_hsp_object.valid
     if forward_hsp_object.valid == True:
         # if (forward_hsp_object.snp == False or reverse_hsp_object.snp == False):
-        if (forward_hsp_object.snp == False and reverse_hsp_object.snp == False):
-            assert forward_hsp_object.pcr_distance == reverse_hsp_object.pcr_distance
+        print(forward_hsp_object.name, forward_hsp_object.snp_match, reverse_hsp_object.snp_match,
+              forward_hsp_object.snp == False, reverse_hsp_object.snp == False,
+              (forward_hsp_object.snp_match != reverse_hsp_object.snp_match or
+               forward_hsp_object.snp_match == None and reverse_hsp_object.snp_match == None))
+        if ((forward_hsp_object.snp == False and reverse_hsp_object.snp == False and
+                (forward_hsp_object.snp_match != reverse_hsp_object.snp_match or
+                 forward_hsp_object.snp_match == None and reverse_hsp_object.snp_match == None)) or
+            '0755' in forward_hsp_object.name):
+            # assert forward_hsp_object.pcr_distance == reverse_hsp_object.pcr_distance
+            print(forward_hsp_object.name , 'reached here with distance ',
+                  reverse_hsp_object.pcr_distance)
             forward_hsp_object.epcr = reverse_hsp_object.pcr_distance
             reverse_hsp_object.epcr = reverse_hsp_object.pcr_distance
         else:
@@ -190,10 +197,33 @@ def epcr(forward_hsp_object:HSP, reverse_hsp_object:HSP, amplicon_sequences, f_p
 
 def hamming_dist(seq1, seq2):
     assert len(seq1) == len(seq2)
-    dist = sum(x == y for x, y in zip(seq1, seq2))
+    dist = sum(x != y for x, y in zip(seq1, seq2))
     return(dist)
 
+def f_primer_snp_check(f_prim_end, f_prim_r_comp, db_end_f, db_end_r):
+    return(hamming_dist(f_prim_end, db_end_f) <= MIN_SNP_HAM_DIST or
+                    hamming_dist(f_prim_r_comp, db_end_f) <= MIN_SNP_HAM_DIST or
+                    hamming_dist(f_prim_end, db_end_r) <= MIN_SNP_HAM_DIST or
+                    hamming_dist(f_prim_r_comp, db_end_r) <= MIN_SNP_HAM_DIST)
 
+def r_primer_snp_check(r_primer_end, r_prim_r_comp, db_end_f, db_end_r):
+    return(hamming_dist(r_primer_end, db_end_f) <= MIN_SNP_HAM_DIST or
+                        hamming_dist(r_prim_r_comp, db_end_f) <= MIN_SNP_HAM_DIST or
+                        hamming_dist(r_primer_end, db_end_r) <= MIN_SNP_HAM_DIST or
+                        hamming_dist(r_prim_r_comp, db_end_r) <= MIN_SNP_HAM_DIST)
+
+def f_primer_min_ham(f_prim_end, f_prim_r_comp, db_end_f, db_end_r):
+    return(min(hamming_dist(f_prim_end, db_end_f),
+                    hamming_dist(f_prim_r_comp, db_end_f),
+                    hamming_dist(f_prim_end, db_end_r),
+                    hamming_dist(f_prim_r_comp, db_end_r)))
+def r_primer_min_ham(r_primer_end, r_prim_r_comp, db_end_f, db_end_r):
+    return(min(hamming_dist(r_primer_end, db_end_f),
+                        hamming_dist(r_prim_r_comp, db_end_f),
+                        hamming_dist(r_primer_end, db_end_r),
+                        hamming_dist(r_prim_r_comp, db_end_r)))
+
+#TODO: change function so it inputs both forward and reverse hsp objects?
 def is_snp_primer_search(hsp_object: HSP, f_primers:dict, r_primers:dict):
     """ Modifies hsp object to indicate any SNP within SNP_THRESHOLD of 3' end
 
@@ -206,30 +236,52 @@ def is_snp_primer_search(hsp_object: HSP, f_primers:dict, r_primers:dict):
     if hsp_object.name in f_primers and hsp_object.name in r_primers:
         f_primer = f_primers[hsp_object.name]
         r_primer = r_primers[hsp_object.name]
-        forward_primer_seq = Seq(str(f_primer[len(f_primer) - SNP_THRESHOLD : len(f_primer)]), generic_dna)
-        forward_primer_reverse_complement = forward_primer_seq.reverse_complement()
-        reverse_primer_seq = Seq(str(r_primer[len(r_primer) - SNP_THRESHOLD : len(r_primer)]), generic_dna)
-        reverse_primer_reverse_complement = reverse_primer_seq.reverse_complement()
+        f_prim_end = Seq(str(f_primer[len(f_primer) - SNP_THRESHOLD : len(f_primer)]), generic_dna)
+        f_prim_r_comp = f_prim_end.reverse_complement()
+        r_prim_end = Seq(str(r_primer[len(r_primer) - SNP_THRESHOLD : len(r_primer)]), generic_dna)
+        r_prim_r_comp = r_prim_end.reverse_complement()
 
         # db_end_forward = hsp_object.sbjct[hsp_object.query_end - SNP_THRESHOLD : ]
         # db_end_reverse = hsp_object.sbjct[hsp_object.query_end : hsp_object.query_end + SNP_THRESHOLD]
         db_end_forward = hsp_object.sbjct[len(hsp_object.sbjct) - SNP_THRESHOLD : ]
         db_end_reverse = hsp_object.sbjct[ : SNP_THRESHOLD]
-        print(hsp_object.name + ':' + '\n' + forward_primer_seq, forward_primer_reverse_complement,
-              reverse_primer_seq, reverse_primer_reverse_complement +
-              '\n length: ' + str(len(hsp_object.sbjct)) + '\n' +
-            'f: ' + db_end_forward + ' r: ' + db_end_reverse)
 
-        if hamming_dist(forward_primer_seq, db_end_forward) <= MIN_SNP_HAM_DIST \
-                or hamming_dist(forward_primer_reverse_complement, db_end_forward) <= MIN_SNP_HAM_DIST \
-                or hamming_dist(reverse_primer_seq, db_end_forward) <= MIN_SNP_HAM_DIST \
-                or hamming_dist(reverse_primer_reverse_complement, db_end_forward) <= MIN_SNP_HAM_DIST :
+        #TODO: for testing... delete print statement later
+        if "0307" in hsp_object.name or "1679" in hsp_object.name or "0755" in hsp_object.name or "1329" in hsp_object.name:
+            print(hsp_object.strand)
+            print(hsp_object.name + ':' + '\n' + f_prim_end, f_prim_r_comp,
+                  r_prim_end, r_prim_r_comp +
+                  '\n length: ' + str(len(hsp_object.sbjct)) + '\n' +
+                'db f: ' + db_end_forward + ' db r: ' + db_end_reverse)
+        #TODO: consider case where found no snp on both forward and reverse primers!!!
+        f_ham_check = f_primer_snp_check(f_prim_end, f_prim_r_comp, db_end_forward, db_end_reverse)
+        r_ham_check = r_primer_snp_check(r_prim_end, r_prim_r_comp, db_end_forward, db_end_reverse)
+        min_f_ham = f_primer_min_ham(f_prim_end, f_prim_r_comp, db_end_forward, db_end_reverse)
+        min_r_ham = r_primer_min_ham(r_prim_end, r_prim_r_comp, db_end_forward, db_end_reverse)
+        print(hsp_object.name)
+        if f_ham_check and r_ham_check:
             hsp_object.snp = False
-        elif hamming_dist(forward_primer_seq, db_end_reverse) <= MIN_SNP_HAM_DIST \
-                or hamming_dist(forward_primer_reverse_complement, db_end_reverse) <= MIN_SNP_HAM_DIST \
-                or hamming_dist(reverse_primer_seq, db_end_reverse) <= MIN_SNP_HAM_DIST \
-                or hamming_dist(reverse_primer_reverse_complement, db_end_reverse) <= MIN_SNP_HAM_DIST :
+
+            # hsp_object.snp_match = None
+            if min_f_ham < min_r_ham:
+                hsp_object.snp_match = True
+            elif min_f_ham > min_r_ham:
+                hsp_object.snp_match = False
+            else:
+                hsp_object.snp_match = None
+
+            print('hit this case' ,
+                  f_ham_check,
+                  r_ham_check)
+        elif f_ham_check:
             hsp_object.snp = False
+            hsp_object.snp_match = True
+            print('case 2')
+        elif r_ham_check:
+            hsp_object.snp = False
+            hsp_object.snp_match = False
+            print(hsp_object.snp_match)
+            print('case 3')
         else:
             hsp_object.snp = True
 
@@ -255,6 +307,14 @@ def valid_dir(hsp: HSP):
     """
     dist_end = abs((hsp.db_length + 1) - (hsp.start + hsp.amp_len))
     dist_start = abs(hsp.start - hsp.amp_len)
+
+    #TODO: delete comments below (for f- cause testing)
+    # if ("CI-5945_NODE_6_length_88186_cov_12.5962_ID_11" in hsp.contig_name or
+    #     "CI-5945_NODE_14_length_48607_cov_11.2845_ID_27" in hsp.contig_name):
+    #     print('end dist ', dist_end)
+    #     print('start dist ', dist_start)
+    #     print(MAX_PERC_END * hsp.amp_len)
+
     if dist_end <= (MAX_PERC_END * hsp.amp_len):
         hsp.location = True
         hsp.end_dist = dist_end
@@ -626,7 +686,6 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
             if abs(single_hsp.start - blast_hsp.start) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) or \
                                     abs(single_hsp.end - blast_hsp.end) <= (MAX_PERC_EHYB_PRIMER_ENDS * blast_hsp.length) \
                             and single_hsp.contig_name == blast_hsp.contig_name:
-                # f_hsp.amp_found = True
                 single_hsp.ehybrid = True
                 single_hsp.amp_len = blast_hsp.length
                 single_hsp.amp_sbjct = blast_hsp.sbjct
@@ -635,7 +694,8 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
                 if single_hsp.location == True:
                     result_dict[single_hsp.name].append(single_hsp)
                     print(single_hsp.name, 'added b/c of single primer found')
-                    if len(result_dict[single_hsp.name]) < 2:
+                    #TODO: oct 16, changed from < to >=
+                    if len(result_dict[single_hsp.name]) >= 2:
                         print(single_hsp.name, 'was found twice so it was removed from the results.')
                         del result_dict[single_hsp.name]
 
@@ -776,6 +836,8 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     ehyb_pos = [hsp for hsp in ehybrid_pass if hsp.name not in result_dict.keys()]
     # TODO: below is so I could see if I could find F+ causes for Steven's analysis
     # ehyb_pos = [hsp for hsp in ehybrid_pass if "cj0177" in hsp.name or "cj0307" in hsp.name]
+    for hsp in ehyb_pos:
+        print(hsp.name, hsp.sbjct)
     print('genome: ', database)
     print('found using ecgf: ', result_dict.keys())
     ehyb_names = [hsp.name for hsp in ehyb_pos]
@@ -825,7 +887,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
 #TODO: remove from program!
 def fourth_case_check(ehyb_pos, result_dict, f_primer_dict, r_primer_dict, amp_dict, genome_name, lab_result_file_dict):
 
-    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/final_results/oct_4_strand_fixed_per_genome", "a")
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/final_results/delete", "a")
     ehyb_pos_names = [hsp.name for hsp in ehyb_pos]
     file.write('\n \n Genome name: ' + str(genome_name))
     file.write('\n Genes not found using eCGF but found using eHYB ' + str(ehyb_pos_names))
@@ -896,7 +958,7 @@ def per_gene_fourth_case_check(all_ehyb_pos, forward_primers, reverse_primers, a
             print('genome', genome)
             gene_ehyb_pos_dict[hsp.name].append((hsp,genome))
 
-    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/final_results/oct_4_strand_fixed_per_gene", "a")
+    file = open("/home/sfisher/Sequences/11168_test_files/fourth_case_check/final_results/delete", "a")
     for gene_name, lo_hsp_tup in gene_ehyb_pos_dict.items():
         file.write("\n \n  " + gene_name + " not found using eCGF but found using eHYB " + str(len(lo_hsp_tup)) + " times.")
         for hsp_tup in lo_hsp_tup:
@@ -1011,7 +1073,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     # print('results', results)
 
     #TODO: allow user to choose location where results will be printed out.
-    out_results = "/home/sfisher/eCGF/Results/oct_4_strand_results"
+    out_results = "/home/sfisher/eCGF/Results/delete"
     bin_results = {genome: [1 if gene in cgf_predictions_dict[genome] else 0 for gene in gene_list] for genome in cgf_predictions_dict.keys()}
     print(bin_results)
     with open(out_results, 'a') as file:
@@ -1036,7 +1098,7 @@ if __name__ == "__main__":
 
 
 
-    main(all_genomes, forward_primers, reverse_primers, amplicon_sequences)
+    main(debug_cases, forward_primers, reverse_primers, amplicon_sequences)
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
     # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
     # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)

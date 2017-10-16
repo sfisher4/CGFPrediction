@@ -43,6 +43,7 @@ class Results():
         self.amp_query = ""
         self.amp_sbjct = ""
         self.partner = None
+        self.snp_match = None #True is forward primer, False is reverse primer
     #     #TODO: where is the snp?
 
 

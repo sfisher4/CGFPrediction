@@ -6,8 +6,8 @@ import pandas as pd
 
 from cgf_pred import CGFPrediction
 
-MIN_PARTNER_BSR = 0.7
-MIN_BSR = 0.7
+MIN_PARTNER_BSR = 0.6
+MIN_BSR = 0.6
 
 def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only):
     # file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
@@ -882,7 +882,7 @@ if __name__ == "__main__":
     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
     # db_directory = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
     db_directory = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-    # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes/debug_f_neg"
+    # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
     # db_directory = "/home/sfisher/Sequences/11168_test_files/memory_trial_CI-5768"
     # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
     # file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
@@ -890,7 +890,7 @@ if __name__ == "__main__":
     lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
 
     #Output text files
-    table_file = "/home/sfisher/Sequences/11168_test_files/tables/delete_me2.txt"
+    table_file = "/home/sfisher/Sequences/11168_test_files/tables/oct_16_min_ham_fixed_and_single_primer_fixed.txt"
     short_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_short_expl.txt"
     gene_file = '/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_expl_per_gene.txt'
     long_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_full_expl.txt"
