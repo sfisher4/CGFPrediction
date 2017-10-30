@@ -61,12 +61,13 @@ class Blastn(object):
                     hsp_object.length = abs(hsp_object.end - hsp_object.start) + 1
                     hsp_object.query_length = abs(hsp.query_end - hsp.query_start) + 1
                     hsp_object.db_length = alignment.length
-                    hsp_object.expect = hsp.expect
+                    # hsp_object.expect = hsp.expect
                     hsp_object.sbjct = hsp.sbjct
                     hsp_object.query = hsp.query
                     hsp_object.identities = hsp.identities
-                    hsp_object.gaps = hsp.gaps
+                    # hsp_object.gaps = hsp.gaps
                     hsp_object.bits = hsp.bits
+
 
                     # assuming no contigs (complete genome)
                     if hsp.sbjct_start < hsp.sbjct_end:
@@ -80,3 +81,5 @@ class Blastn(object):
 
     def remove_hsp_object_all(self, hsp):
         self.hsp_objects = [hsp_o for hsp_o in self.hsp_objects if hsp != hsp_o]
+
+

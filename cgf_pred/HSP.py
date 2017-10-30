@@ -39,26 +39,33 @@ class HSP(Results):
             self.name = name
         else:
             self.name = '11168_' + name
-        self.expect = -1
-        self.start = -1 #not possible to have a start or end that starts at -1
-        self.end = -1   #not possible to have a start or end that starts at -1
+        # self.expect = -1
+        # self.gaps = 0
+        # self.duplicate = False
         self.query_start = -1
         self.query_end = -1
         self.identities = -1
+        self.start = -1
+        self.end = -1
         self.length = 0
         self.db_length = 0
         self.contig_name = ""
         self.sbjct = ""
         self.query = ""
-        self.gaps = 0
         self.bsr = -1
-        self.duplicate = False
 
     def set_name(self, name):
         self.name = name
 
+    # def __set_primer_from_amp__(self, amp_object):
+    #     self.contig_name = amp_object.contig_name
+    #     self.length = abs(self.end - self.start)
+    #     self.db_length = amp_object.db_length
+
+
     def __eq__(self, other):
-        return self.sbjct == other.sbjct and self.contig_name == other.contig_name
+        # return self.sbjct == other.sbjct and self.contig_name == other.contig_name
+        return self.contig_name == other.contig_name and self.start == other.start and self.end == other.end
 
 
 
