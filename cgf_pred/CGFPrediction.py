@@ -34,7 +34,7 @@ MIN_SNP_HAM_DIST = 2
 MAX_AMP_PRIMER_ALIGN = 10       #The amount of bp's that can be different btwn the hsp primer and hsp amp when searching for ehyb on same or diff contigs
 MAX_PERC_EHYB_PRIMER_ENDS = 0.05
 MAX_PERC_END = 0.10             #Max percentage of amp_length that will consider a primer at end of contig.
-SINGLE_PRIMER_ID = 0.95
+SINGLE_PRIMER_ID = 0.90
 
 #bit score calculation
 LAMBDA = 1.28
@@ -967,9 +967,8 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     """
 
     #bsr
-    #TODO: fix this (so anyone can access this!!!)
-    # max_f_bits_dict = max_bits(forward_primers)
-    # max_r_bits_dict = max_bits(reverse_primers)
+    max_f_bits_dict = max_bits(forward_primers)
+    max_r_bits_dict = max_bits(reverse_primers)
 
     #testing
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
