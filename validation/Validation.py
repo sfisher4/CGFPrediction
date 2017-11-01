@@ -47,6 +47,7 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
                                              amplicon_sequences, file_gene_dict)
         cgf_predictions_dict = cgf_predictions[0]
         pred_exception_dict = cgf_predictions[2]
+        single_primer_dict = cgf_predictions[3]
         assert file_name in file_gene_dict, "error: The db directory contains a file that does not have validation results in 'file'"
         genes_expected = file_gene_dict[file_name]
         genes_found_without_exceptions = [key[6:] for key in cgf_predictions_dict.keys()]
@@ -58,7 +59,8 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
                 print('!!! BSR', hsp.name, hsp.bsr)
 
         gene_exceptions_found = [key[6:] for key in pred_exception_dict.keys()]
-        genes_found = ChainMap({}, genes_found_without_exceptions, gene_exceptions_found)
+        single_primers_found = [key[6:] for key in single_primer_dict.keys()]
+        genes_found = ChainMap({}, genes_found_without_exceptions, gene_exceptions_found, single_primers_found)
         print(genes_found)
 
         false_positive = set(genes_found) - set(genes_expected)
@@ -76,7 +78,11 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
         #PANDAS
         df_dict = {}
         for gene in gene_list:
-            if gene in false_positive:
+            if gene in false_positive and \
+                (gene in gene_exceptions_found or
+                         gene in single_primers_found):
+                df_dict[gene] = "+0.5"
+            elif gene in false_positive:
                 df_dict[gene] = "+1"
             elif gene in false_negative:
                 df_dict[gene] = "-1"
@@ -112,6 +118,13 @@ def create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db
                 if gene_list[count] not in t_lo_f_pos:
                     t_lo_f_pos[gene_list[count]] = 0
                 count += 1
+            elif word == "+0.5":
+                try:
+                    t_lo_f_pos[gene_list[count]] += 0.5
+                except:
+                    t_lo_f_pos[gene_list[count]] = 0.5
+                count += 1
+
     t_file.close()
 
     with open(table_file, "a") as myfile:
@@ -130,20 +143,9 @@ if __name__ == "__main__":
     # db_directory = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
     db_directory = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
     # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
-    # db_directory = "/home/sfisher/Sequences/11168_test_files/memory_trial_CI-5768"
-    # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
-    # file = open("/home/sfisher/Sequences/11168_test_files/CI-5768_results.txt", "r")
-    # file = open("/home/sfisher/Sequences/11168_test_files/cgf40_results_modified.txt", "r")
-    lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
 
-    #Output text files
-    table_file = "/home/sfisher/Sequences/11168_test_files/tables/oct_30_all_all_singlelen_bsr30.txt"
-    # short_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_short_expl.txt"
-    # gene_file = '/home/sfisher/Sequences/11168_test_files/eCGF_causation/30_ehyb_expl_per_gene.txt'
-    # long_file = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_full_expl.txt"
-    # med_file_f_neg = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_short_f_neg.txt"
-    # med_file_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/6_ehyb_short_f_pos.txt"
-    # per_gene_f_pos = "/home/sfisher/Sequences/11168_test_files/eCGF_causation/15_ecgf_f+_causes.txt"
+    lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
+    table_file = "/home/sfisher/Sequences/11168_test_files/tables/nov_1_single_90id.txt"
 
     ehyb_only = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
                  'cj0307',

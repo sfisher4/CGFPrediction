@@ -33,6 +33,7 @@ MIN_SNP_HAM_DIST = 2
 MAX_AMP_PRIMER_ALIGN = 10       #The amount of bp's that can be different btwn the hsp primer and hsp amp when searching for ehyb on same or diff contigs
 MAX_PERC_EHYB_PRIMER_ENDS = 0.05
 MAX_PERC_END = 0.10             #Max percentage of amp_length that will consider a primer at end of contig.
+SINGLE_PRIMER_ID = 0.90
 
 GENE_LIST = ['11168_cj0008', '11168_cj0033', '11168_cj0035', '11168_cj0057', '11168_cj0177', '11168_cj0181',
              '11168_cj0264c', '11168_cj0297c', '11168_cj0298c', '11168_cj0307', '11168_cj0421c', '11168_cj0483',
@@ -980,6 +981,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
                                           amp_sequences, database, blast_object_hsps,
                                           dict_amp, file_dict)
     result_dict = results_list[0]
+    single_primer_results_dict = results_list[1]
 
 
     #CASE 4: exceptions!!!
@@ -1053,7 +1055,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
                       os.path.basename(database), file_dict)
 
 
-    return [results_list[0], ehyb_pos, exception_result_dict]
+    return [results_list[0], ehyb_pos, exception_result_dict, single_primer_results_dict]
 
 
 # #TODO: create amp_dict
@@ -1136,17 +1138,15 @@ def four_branch_prediction(forward_blast, reverse_blast, full_blast_qcov_hsps, d
     # ehybrid_hsp_pass_85 = [hsp for hsp in ehybrid_hsp_pass if (hsp.identities / hsp.length) >= 0.99]
     # ehybrid_hsp_fail_85 = [hsp for hsp in ehybrid_hsp_fail if (hsp.identities / hsp.length) >= 0.99]
 
-    #TODO: this is a trial
-    ehybrid_hsp_pass_single = [hsp for hsp in ehybrid_hsp_pass if ((hsp.identities / hsp.length) >= 0.97 and hsp.length < 200) or ((hsp.identities / hsp.length) >= 0.99 and hsp.length >= 200)]
-    ehybrid_hsp_fail_single = [hsp for hsp in ehybrid_hsp_fail if ((hsp.identities / hsp.length) >= 0.97 and hsp.length < 200) or ((hsp.identities / hsp.length) >= 0.99 and hsp.length >= 200)]
+    ehybrid_hsp_pass_single = [hsp for hsp in ehybrid_hsp_pass if (hsp.identities / hsp.length) >= SINGLE_PRIMER_ID]
+    ehybrid_hsp_fail_single = [hsp for hsp in ehybrid_hsp_fail if (hsp.identities / hsp.length) >= SINGLE_PRIMER_ID]
 
     for hsp in ehybrid_hsp_pass:
-        if ((hsp.identities / hsp.length) >= 0.97 and hsp.length < 200) or (
-                (hsp.identities / hsp.length) >= 0.99 and hsp.length >= 200):
+        if (hsp.identities / hsp.length) >= SINGLE_PRIMER_ID:
             print(hsp.identities / hsp.length)
             print(hsp.length)
         else:
-            print('DID NOT CATCH THIS CASE IN SINGLE PRIMER lookup:')
+            print('DID NOT CATCH THIS CASE IN SINGLE PRIMER lookup:', hsp.name)
             print(hsp.identities / hsp.length)
             print(hsp.length)
 
@@ -1160,29 +1160,30 @@ def four_branch_prediction(forward_blast, reverse_blast, full_blast_qcov_hsps, d
     #combine all results
     result_dict = defaultdict(list)
     all_hsp = defaultdict(list)
-    if debug == True:
-        for k,v in all_hsp_same_contig.items():
-            for hsp in v:
-                all_hsp[k].append(hsp)
-        for k,v in all_hsp_diff_contig.items():
-            for hsp in v:
-                all_hsp[k].append(hsp)
-        for k,v in all_hsp_one_primer.items():
-            for hsp in v:
-                all_hsp[k].append(hsp)
+    single_primer_results_dict = defaultdict(list)
+    # if debug == True:
+    #     for k,v in all_hsp_same_contig.items():
+    #         for hsp in v:
+    #             all_hsp[k].append(hsp)
+    #     for k,v in all_hsp_diff_contig.items():
+    #         for hsp in v:
+    #             all_hsp[k].append(hsp)
+    #     for k,v in all_hsp_one_primer.items():
+    #         for hsp in v:
+    #             all_hsp[k].append(hsp)
     for k,v in results_dict_same_contig.items():
         result_dict[k].append(v)
     for k,v in results_diff_contig.items():
         result_dict[k].append(v)
     for k,v in results_one_primer.items():
-        result_dict[k].append(v)
+        single_primer_results_dict[k].append(v)
 
 
-    if debug == True:
-        results_list = [result_dict, all_hsp]
-    else:
+    # if debug == True:
+    #     results_list = [result_dict, all_hsp]
+    # else:
         #TODO: remove ehyb_pos from here... I added it for testing.
-        results_list = [result_dict]
+    results_list = [result_dict, single_primer_results_dict]
 
     gc.collect()
     # print('epcr only results', epcr_only_results)
@@ -1333,6 +1334,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
         files_paths.append(os.path.abspath(db_fasta) + '/' + file)
     cgf_predictions_dict = {}
     exception_dict_result = {}
+    single_primer_results_dict = {}
 
     #TODO: added dict for testing
     all_ehyb_pos_dict = {}
@@ -1344,6 +1346,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
         result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta, file_gene_dict)
         cgf_predictions_dict[file_name] = result[0]
         exception_dict_result[file_name] = result[2]
+        single_primer_results_dict[file_name] = result[3]
 
         #TODO: delete below... added for testing:
         all_ehyb_pos_dict[file_name] = result[1]
@@ -1367,8 +1370,11 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
     # print('results', results)
 
     #TODO: allow user to choose location where results will be printed out.
-    out_results = "/home/sfisher/eCGF/delete"
-    bin_results = {genome: [1 if gene in cgf_predictions_dict[genome] else 2 if gene in exception_dict_result[genome] else 0 for gene in GENE_LIST] for genome in cgf_predictions_dict.keys()}
+    out_results = "/home/sfisher/eCGF/nov_1_trial"
+    bin_results = {genome: [1 if gene in cgf_predictions_dict[genome]
+                            else 2 if gene in exception_dict_result[genome]
+                            else 2 if gene in single_primer_results_dict[genome]
+                            else 0 for gene in GENE_LIST] for genome in cgf_predictions_dict.keys()}
     print('bin results', bin_results)
     with open(out_results, 'a') as file:
         file.write('Genes: ' + str(GENE_LIST))
