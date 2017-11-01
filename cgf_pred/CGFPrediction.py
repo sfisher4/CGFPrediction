@@ -1405,18 +1405,18 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta):
 
 
 # TODO: Commented out so I could use as package in github. (running main from __main__.py)
-if __name__ == "__main__":
-    all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-    debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
-    stevens_genomes = "/home/sfisher/steven_test_genomes_to_run/test.genomes"
-
-    forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
-    reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
-    amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
-
-
-
-    main(all_genomes, forward_primers, reverse_primers, amplicon_sequences)
+# if __name__ == "__main__":
+#     all_genomes = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+#     debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
+#     stevens_genomes = "/home/sfisher/steven_test_genomes_to_run/test.genomes"
+#
+#     forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
+#     reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
+#     amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
+#
+#
+#
+#     main(all_genomes, forward_primers, reverse_primers, amplicon_sequences)
 
 
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
