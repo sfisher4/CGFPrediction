@@ -14,6 +14,7 @@ from Bio.Seq import Seq
 from cgf_pred.Blastn import Blastn
 from cgf_pred.HSP import HSP
 from pathlib import Path
+from math import log
 
 #BLASTN LIMITATIONS
 #db vs primer
@@ -33,7 +34,11 @@ MIN_SNP_HAM_DIST = 2
 MAX_AMP_PRIMER_ALIGN = 10       #The amount of bp's that can be different btwn the hsp primer and hsp amp when searching for ehyb on same or diff contigs
 MAX_PERC_EHYB_PRIMER_ENDS = 0.05
 MAX_PERC_END = 0.10             #Max percentage of amp_length that will consider a primer at end of contig.
-SINGLE_PRIMER_ID = 0.90
+SINGLE_PRIMER_ID = 0.95
+
+#bit score calculation
+LAMBDA = 1.28
+K = 0.460
 
 GENE_LIST = ['11168_cj0008', '11168_cj0033', '11168_cj0035', '11168_cj0057', '11168_cj0177', '11168_cj0181',
              '11168_cj0264c', '11168_cj0297c', '11168_cj0298c', '11168_cj0307', '11168_cj0421c', '11168_cj0483',
@@ -92,29 +97,31 @@ def blastn_query_exceptions(query_gene, db, qcov):
     stdout, stderr = blastn_cline()
     return stdout
 
-def max_bs_blast(seqn_dir):
-    """ Outputs stdout from blastn in xml format using 100% id
+# def max_bs_blast(seqn_dir):
+#     """ Outputs stdout from blastn in xml format using 100% id
+#
+#     :param seqn_dir: A path to a Fasta file containing sequences to search for bits against itself
+#     :return: stdout in xml format
+#     """
+#     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(seqn_dir)
+#     DB_process = subprocess.run(blastdb_cmd,
+#                                   shell=True,
+#                                   stdin=subprocess.PIPE,
+#                                   stdout=subprocess.PIPE,
+#                                   stderr=subprocess.PIPE,
+#                                 check=True)
+#     # DB_process.wait()
+#
+#     blastn_cline = NcbiblastnCommandline(query=seqn_dir,
+#                                          db=seqn_dir,
+#                                          word_size=WORD_SIZE,
+#                                          outfmt=5,
+#                                          perc_identity=100,
+#                                          qcov_hsp_perc=100) #, task='blastn-short')
+#     stdout, stderr = blastn_cline()
+#     return stdout
 
-    :param seqn_dir: A path to a Fasta file containing sequences to search for bits against itself
-    :return: stdout in xml format
-    """
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(seqn_dir)
-    DB_process = subprocess.run(blastdb_cmd,
-                                  shell=True,
-                                  stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                check=True)
-    # DB_process.wait()
 
-    blastn_cline = NcbiblastnCommandline(query=seqn_dir,
-                                         db=seqn_dir,
-                                         word_size=WORD_SIZE,
-                                         outfmt=5,
-                                         perc_identity=100,
-                                         qcov_hsp_perc=100) #, task='blastn-short')
-    stdout, stderr = blastn_cline()
-    return stdout
 
 def create_blastn_object_exceptions(query_gene:str, db:str, qcov):
     blastn_object = Blastn()
@@ -526,27 +533,37 @@ def false_neg_pred(attr_bin_tree:list, hsp:HSP, i:int) -> int:
     elif not getattr(hsp, attr_i):
         return false_neg_pred(attr_bin_tree, hsp, (2 * i) + 2)
 
-def max_bs(file_dir:str) -> dict:
-    """ Determines the max bs of each genome in file_dir by running it against itself.
+# def max_bs(file_dir:str) -> dict:
+#     """ Determines the max bs of each genome in file_dir by running it against itself.
+#
+#     :param file_dir: Path to fasta file containing reference genomes (query) needed for BSR
+#     :return: A dictionary containing the bits of each genome in file_dir
+#     """
+#
+#     dict_bits = {}
+#     files = (file for file in os.listdir(file_dir) if file.endswith('.fasta'))
+#     files_paths = []
+#     for file in files:
+#         files_paths.append(os.path.abspath(file_dir) + '/' + file)
+#     for file_path in files_paths:
+#         stdout_xml = max_bs_blast(file_path)
+#         blastn_obj = Blastn()
+#         blastn_obj.create_blast_records(stdout_xml)
+#         blastn_obj.create_hsp_objects(file_path)
+#         assert len(blastn_obj.hsp_objects) == 1
+#         for hsp in blastn_obj.hsp_objects:
+#             dict_bits[hsp.name] = hsp.bits
+#     return dict_bits
 
-    :param file_dir: Path to fasta file containing reference genomes (query) needed for BSR
-    :return: A dictionary containing the bits of each genome in file_dir
-    """
+def max_bits(seqn_dir:str) -> dict:
+    max_bits_dict = {}
+    for record in SeqIO.parse(seqn_dir, "fasta"):
+        if "11168_" not in record.id:
+            max_bits_dict['11168_' + record.id] = (LAMBDA * len(record.seq) - log(K)) / log(2)
+        else:
+            max_bits_dict[record.id] = (LAMBDA * len(record.seq) - log(K)) / log(2)
+    return max_bits_dict
 
-    dict_bits = {}
-    files = (file for file in os.listdir(file_dir) if file.endswith('.fasta'))
-    files_paths = []
-    for file in files:
-        files_paths.append(os.path.abspath(file_dir) + '/' + file)
-    for file_path in files_paths:
-        stdout_xml = max_bs_blast(file_path)
-        blastn_obj = Blastn()
-        blastn_obj.create_blast_records(stdout_xml)
-        blastn_obj.create_hsp_objects(file_path)
-        assert len(blastn_obj.hsp_objects) == 1
-        for hsp in blastn_obj.hsp_objects:
-            dict_bits[hsp.name] = hsp.bits
-    return dict_bits
 
 def cj0181_missing_seq(hsp_object, primer_dict, database, chimeric_seq) -> bool:
     """ Determines if the missing cj0181 sequence is the chimeric primer sequence for its exception
@@ -587,7 +604,7 @@ def cj0181_missing_seq(hsp_object, primer_dict, database, chimeric_seq) -> bool:
     return missing_seq_found == chimeric_seq or missing_seq_found == r_comp_chimeric_seq
 
 
-def bsr(blast_object:Blastn, max_bits_dict:dict, primer_dict:dict, database):
+def bsr(blast_object:Blastn, max_bits_dict:dict):
     """ Removes hsp object from blast_object if BSR is not >= MIN_BSR
 
     :param blast_object: A Blastn Object
@@ -951,10 +968,13 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
 
     #bsr
     #TODO: fix this (so anyone can access this!!!)
+    # max_f_bits_dict = max_bits(forward_primers)
+    # max_r_bits_dict = max_bits(reverse_primers)
+
+    #testing
     f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
     r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
-    max_f_bits_dict = max_bs(f_bs_primer_dir)
-    max_r_bits_dict = max_bs(r_bs_primer_dir)
+
     # amp_bs_dir = "/home/sfisher/Sequences/BSR/amp_seq/"
     # max_amp_bits_dict = max_bs(amp_bs_dir)
 
@@ -972,8 +992,8 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     dict_f_primers = create_dict_from_fasta_seqs(forward_primers)
     dict_r_primers = create_dict_from_fasta_seqs(reverse_primers)
     dict_amp = create_dict_from_fasta_seqs(amp_sequences)
-    bsr(forward_blast_bsr, max_f_bits_dict, dict_f_primers, database)
-    bsr(reverse_blast_bsr, max_r_bits_dict, dict_r_primers, database)
+    bsr(forward_blast_bsr, max_f_bits_dict)
+    bsr(reverse_blast_bsr, max_r_bits_dict)
 
     #predictions
     results_list = four_branch_prediction(forward_blast_bsr, reverse_blast_bsr, full_blast_qcov_hsps,

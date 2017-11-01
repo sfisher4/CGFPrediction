@@ -145,7 +145,7 @@ if __name__ == "__main__":
     # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
 
     lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
-    table_file = "/home/sfisher/Sequences/11168_test_files/tables/nov_1_single_90id.txt"
+    table_file = "/home/sfisher/Sequences/11168_test_files/tables/nov_1_bsr_trial.txt"
 
     ehyb_only = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
                  'cj0307',
