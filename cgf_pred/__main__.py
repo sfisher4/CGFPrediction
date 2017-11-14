@@ -18,8 +18,12 @@ def main(args=None):
     parser.add_argument("genomes",
                         help="a path to a directory that contains fasta files for all genomes of interest",
                         type=str)
+    parser.add_argument("out_file",
+                       help = "a path to a file that the eCGF results should be printed.",
+                       type=str)
+    #TODO: add optional argument for validation
     args=parser.parse_args()
-    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'])
+    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'], args.out_file)
 
 if __name__ == '__main__':
     main()

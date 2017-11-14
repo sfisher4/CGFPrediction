@@ -38,3 +38,8 @@ Validation Setting (Debug Option)
 - decision tree --> ValTree
 
 ** how to interpret validation data?
+
+**NOTES:
+
+If you receive more fingerprints in the database, this is how you can add it to the program:
+ --> must be the same order of genes that is in the program

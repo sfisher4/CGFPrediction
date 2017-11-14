@@ -749,7 +749,7 @@ class TestContigTrunc(unittest.TestCase):
             full_out_file_path = db_directory + "/out_files/" + "full_" + name.replace("fasta", "xml")
             forward_out_file_path = db_directory + "/out_files/" + "f_" + name.replace("fasta", "xml")
             reverse_out_file_path = db_directory + "/out_files/" + "r_" + name.replace("fasta", "xml")
-            hsp_predictions = CGFPrediction.ecgf(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path)
+            hsp_predictions = CGFPrediction.ecgf(f_primers, r_primers, file_path, forward_out_file_path, reverse_out_file_path, amplicon_sequences, full_out_file_path, debug)
 
             if "61" in file_path or "306" in file_path:
                 self.assertEqual(len(hsp_predictions), 1)
