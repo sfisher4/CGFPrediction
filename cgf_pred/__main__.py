@@ -12,6 +12,10 @@ def main(args=None):
     paths = {fasta.stem: pkg_resources.resource_filename('cgf_pred', 'fastas/' + str(fasta.stem) + '.fasta')
              for fasta in Path(DATA_PATH).glob('*.fasta')}
 
+    DB_PATH = pkg_resources.resource_filename('cgf_pred', 'csvs/')
+    db_paths = {txt.stem: pkg_resources.resource_filename('cgf_pred', 'csvs/' + str(txt.stem) + '.txt')
+                for txt in Path(DB_PATH).glob('*.txt')}
+
     if args is None:
         args = sys.argv[1: ]
     parser = argparse.ArgumentParser()
@@ -21,9 +25,10 @@ def main(args=None):
     parser.add_argument("out_file",
                        help = "a path to a file that the eCGF results should be printed.",
                        type=str)
+
     #TODO: add optional argument for validation
     args=parser.parse_args()
-    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'], args.out_file)
+    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'], args.out_file, db_paths['error_rate'])
 
 if __name__ == '__main__':
     main()
