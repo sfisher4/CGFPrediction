@@ -1129,29 +1129,29 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, cj0181_f_primer,
 
 
 # TODO: Commented out so I could use as package in github. (running main from __main__.py)
-if __name__ == "__main__":
-
-    small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-    # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
-    # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
-    # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
-    puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
-    all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
-    debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
-    # out_results = "/home/sfisher/eCGF/all_genomes/testing_results/new_single_cell_Test.csv"
-    out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
-    # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
-
-    #TODO: add lab binary results for reference??
-    lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
-    error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
-    forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
-    reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
-    amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
-    f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
-    r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
-
-    main(all_genomes, forward_primers, reverse_primers, amplicon_sequences, f_primer_file, r_primer_file, out_results, error_rates_file)
+# if __name__ == "__main__":
+#
+#     small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+#     # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
+#     # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
+#     # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
+#     puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
+#     all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
+#     debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
+#     # out_results = "/home/sfisher/eCGF/all_genomes/testing_results/new_single_cell_Test.csv"
+#     out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
+#     # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
+#
+#     #TODO: add lab binary results for reference??
+#     lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
+#     error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
+#     forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
+#     reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
+#     amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
+#     f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
+#     r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
+#
+#     main(all_genomes, forward_primers, reverse_primers, amplicon_sequences, f_primer_file, r_primer_file, out_results, error_rates_file)
 
 
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
