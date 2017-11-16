@@ -1063,8 +1063,8 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
 
 #TODO: changed db_dir to file_path when calling on each genome.
 #TODO: put CASE 4: exceptions into another function and call that separately
-def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, cj0181_f_primer, cj0181_r_primer,
-         out_results, error_rates_file):
+def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
+         cj0181_f_primer, cj0181_r_primer, error_rates_file):
     """
 
     :param db_directory: The location of the directory with fasta database files contained (already formatted using makeblastdb)
@@ -1124,7 +1124,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, cj0181_f_primer,
     write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
                          error_rates_file, out_results)
 
-    print(cgf_predictions_dict)
+    # print(cgf_predictions_dict)
     return cgf_predictions_dict
 
 
@@ -1151,7 +1151,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, cj0181_f_primer,
 #     f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
 #     r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
 #
-#     main(all_genomes, forward_primers, reverse_primers, amplicon_sequences, f_primer_file, r_primer_file, out_results, error_rates_file)
+#     main(all_genomes, out_results, forward_primers, reverse_primers, amplicon_sequences, f_primer_file, r_primer_file, error_rates_file)
 
 
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
