@@ -19,15 +19,15 @@ def main(args=None):
     if args is None:
         args = sys.argv[1: ]
     parser = argparse.ArgumentParser()
-    parser.add_argument("genomes",
-                        help="a path to a directory that contains fasta files for all genomes of interest",
+    parser.add_argument('genomes',
+                        help="a path to a directory containing fasta files for all query genomes",
                         type=str)
-    parser.add_argument("out_file",
-                       help = "a path to a file that the eCGF results should be printed.",
+    parser.add_argument('out_file',
+                       help = "a path to a csv file where eCGF results should be printed.",
                        type=str)
 
     #TODO: add optional argument for validation
-    args=parser.parse_args()
+    args = parser.parse_args()
     CGFPrediction.main(args.genomes, args.out_file, paths['f_primers'], paths['r_primers'], paths['amp_seq'],
                        paths['cj0181_f_primer'], paths['cj0181_r_primer'], db_paths['error_rate'])
 
