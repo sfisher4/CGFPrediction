@@ -28,7 +28,9 @@ def main(args=None):
 
     #TODO: add optional argument for validation
     args=parser.parse_args()
-    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'], args.out_file, db_paths['error_rate'])
+    CGFPrediction.main(args.genomes, paths['f_primers'], paths['r_primers'], paths['amp_seq'],
+                       paths['cj0181_f_primer'], paths['cj0181_r_primer'],
+                       args.out_file, db_paths['error_rate'])
 
 if __name__ == '__main__':
     main()

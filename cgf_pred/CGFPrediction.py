@@ -607,7 +607,7 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
 
     return result_dict
 
-def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fail):
+def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass):
     """ Prediction of cgf when only one primer is found.
 
     :param lo_hsp_single_primers: list of hsp's where only one primer is found.
@@ -649,7 +649,7 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass, ehybrid_hsp_fai
 #TODO: delete file_dict from input (only needed for fourth case check)
 #TODO: make exceptions into helper functions
 # @profile
-def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str) -> list:
+def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, cj0181_f_primer, cj0181_r_primer) -> list:
     """ Predicts in vitro cgf (eCGF)
 
     :param forward_primers: A string containing the path to all the 40 primer sequences in a fasta file
@@ -664,16 +664,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     max_f_bits_dict = max_bits(forward_primers)
     max_r_bits_dict = max_bits(reverse_primers)
 
-    #testing
-    # f_bs_primer_dir = "/home/sfisher/Sequences/BSR/f_primers/"
-    # r_bs_primer_dir = "/home/sfisher/Sequences/BSR/r_primers/"
-
-    # amp_bs_dir = "/home/sfisher/Sequences/BSR/amp_seq/"
-    # max_amp_bits_dict = max_bs(amp_bs_dir)
-
     #blastn
-    # forward_blast = create_blastn_object(forward_primers, database, forward_out_file, True)
-    # reverse_blast = create_blastn_object(reverse_primers, database, reverse_out_file, True)
     forward_blast_bsr = create_blastn_bsr_object(forward_primers, database)
     reverse_blast_bsr = create_blastn_bsr_object(reverse_primers, database)
     blast_object_hsps = create_blastn_object(amp_sequences, database)
@@ -698,7 +689,7 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     single_primer_results_dict = results_list[1]
 
 
-    #CASE 4: exceptions!!!
+    #CASE 4: exceptions
     lo_hsp_ehybrid = ehyb(ehyb_blast_hsps)  # assigns ehybrid attributes to each hsp from amp vs db
     ehybrid_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
     ehyb_pos = [hsp for hsp in ehybrid_pass if hsp.name not in result_dict.keys()
@@ -707,14 +698,11 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     # ehyb_pos = [hsp for hsp in ehybrid_pass]
     ehyb_names = [hsp.name for hsp in ehyb_pos]
 
-
     #cj0181 case exception - AGGATTA 7bp 5'end
     exception_result_dict = {}
     if '11168_cj0181' in ehyb_names:
-        f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
-        r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
-        f_blast_exc = create_blastn_object_exceptions(f_primer_file, database, 60)
-        r_blast_exc = create_blastn_object_exceptions(r_primer_file, database, 60)
+        f_blast_exc = create_blastn_object_exceptions(cj0181_f_primer, database, 60)
+        r_blast_exc = create_blastn_object_exceptions(cj0181_r_primer, database, 60)
         lo_f_primers = []
         lo_r_primers = []
 
@@ -730,11 +718,6 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
         if len(lo_f_primers) > 0 and len(lo_r_primers) > 0 :
             exception_result_dict = four_branch_prediction(f_blast_exc, r_blast_exc, ehyb_pos, dict_f_primers, dict_r_primers, max_f_bits_dict,
                                        max_r_bits_dict, amp_sequences, database, ehyb_pos)[0]
-        #TODO: !!!
-        # elif len(lo_r_primers) == 0:
-        #     #do single primer lookup
-
-        #ensure same contig found in ehyb_names and ecgf
 
     #TODO: delete print statements
     # for hsp in ehyb_pos:
@@ -785,13 +768,12 @@ def four_branch_prediction(forward_blast, reverse_blast, full_blast_qcov_hsps, d
 
     lo_hsp_ehybrid = ehyb(blast_object_hsps, 150)
     ehybrid_hsp_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
-    ehybrid_hsp_fail = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == False]
+    # ehybrid_hsp_fail = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == False]
 
     #Different contig prediction
     # diff_contig = diff_contig_pred(lo_tup_diff_contig, max_r_bits_dict, max_r_bits_dict, ehybrid_hsp_pass)
     # results_diff_contig = diff_contig[0]
     results_diff_contig = diff_contig_pred(lo_tup_diff_contig, max_r_bits_dict, max_r_bits_dict, ehybrid_hsp_pass)
-
     diff_contig_results_keys = [key for key in results_diff_contig.keys()]
     same_contig_result_keys = [key for key in results_dict_same_contig.keys()]
 
@@ -801,10 +783,10 @@ def four_branch_prediction(forward_blast, reverse_blast, full_blast_qcov_hsps, d
                             if hsp.name not in same_contig_result_keys and hsp.name not in diff_contig_results_keys]
 
     ehybrid_hsp_pass_single = [hsp for hsp in ehybrid_hsp_pass if (hsp.identities / hsp.length) >= SINGLE_PRIMER_ID]
-    ehybrid_hsp_fail_single = [hsp for hsp in ehybrid_hsp_fail if (hsp.identities / hsp.length) >= SINGLE_PRIMER_ID]
+    # ehybrid_hsp_fail_single = [hsp for hsp in ehybrid_hsp_fail if (hsp.identities / hsp.length) >= SINGLE_PRIMER_ID]
 
     lo_hsp_single_primers = assign_bsr(f_hsp_single_primers, r_hsp_single_primers, max_f_bits_dict, max_r_bits_dict)
-    results_one_primer = single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass_single, ehybrid_hsp_fail_single)
+    results_one_primer = single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass_single)
 
     #combine all results
     result_dict = defaultdict(list)
@@ -926,40 +908,38 @@ def find_closest_fingerprint(bin_results:list, cgftypes_file:str) -> list:
 
     """
 
-    fingerprint_track = open(cgftypes_file, "r")
-    csvReader = csv.reader(fingerprint_track)
-    header = next(csvReader)
-    cgf_type_index = header.index("cgf.type")
+    with open(cgftypes_file, "r") as fingerprint_track:
+        csvReader = csv.reader(fingerprint_track)
+        header = next(csvReader)
+        cgf_type_index = header.index("cgf.type")
+        strain_freq_index = header.index("num.strains")
 
-    print('header', header)
+        dict_gene_indicies = {gene : header.index(gene) for gene in GENE_LIST}
+        found_bin_dict = {gene: bin_results[index] for index, gene in enumerate(GENE_LIST)}
 
-    fingerprint_dict = {gene : header.index(gene) for gene in GENE_LIST}
-    found_bin_dict = {}
-    count = 0
-    for gene in GENE_LIST:
-        found_bin_dict[gene] = bin_results[count]
-        count += 1
+        largest_lo_tup = []
+        largest_strain_freq = 0
+        for row in csvReader:
+            row_bin_dict = {gene: int(row[index]) for gene, index in dict_gene_indicies.items()}
+            dict_differences = {val : found_bin_dict[val] - row_bin_dict[val] for val in found_bin_dict
+                                if val in row_bin_dict and found_bin_dict[val] - row_bin_dict[val] != 0}
 
-    largest_lo_tup = []
-    for row in csvReader:
-        db_bin_dict = {}
-        for gene, index in fingerprint_dict.items():
-            db_bin_dict[gene] = int(row[index])
-        dict_differences = {val : found_bin_dict[val] - db_bin_dict[val]
-                       for val in found_bin_dict if val in db_bin_dict and found_bin_dict[val] - db_bin_dict[val] != 0}
+            if largest_lo_tup == []:
+                largest_lo_tup = [(row[cgf_type_index], dict_differences)]
+                largest_strain_freq = row[strain_freq_index]
 
-        if largest_lo_tup == []:
-            largest_lo_tup = [(row[cgf_type_index], dict_differences)]
+            elif len(dict_differences) < len(largest_lo_tup[0][1]):
+                largest_lo_tup = [(row[cgf_type_index], dict_differences)]
 
-        elif len(dict_differences) < len(largest_lo_tup[0][1]):
-            largest_lo_tup = [(row[cgf_type_index], dict_differences)]
-
-        elif len(dict_differences) == len(largest_lo_tup[0][1]):
-            largest_lo_tup.append(((row[cgf_type_index], dict_differences)))
+            elif len(dict_differences) == len(largest_lo_tup[0][1]):
+                strain_freq = row[strain_freq_index]
+                if strain_freq > largest_strain_freq:
+                    largest_strain_freq = strain_freq
+                    largest_lo_tup = [(row[cgf_type_index], dict_differences)] + largest_lo_tup
+                else:
+                    largest_lo_tup.append((row[cgf_type_index], dict_differences))
 
     print(largest_lo_tup)
-    fingerprint_track.close()
-
     return largest_lo_tup
 
 def make_binary(lo_result):
@@ -969,14 +949,11 @@ def make_binary(lo_result):
         for result in lo_result:
             if result == 2:
                 count = lo_result.index(result)
-
                 tmp = list(lo_result)
                 tmp[count] = 0
                 lo_result_0 = make_binary(tmp)
-
                 tmp[count] = 1
                 lo_result_1 = make_binary(tmp)
-
                 return [lo_result_0, lo_result_1]
 
 def flatten(items, seqtypes=(list, tuple)):
@@ -1026,7 +1003,8 @@ def na_empty_lists(list):
     else:
         return list
 
-def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict, error_rates_file):
+def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
+                         error_rates_file, out_results):
 
     error_rate_dict = {}
     with open(error_rates_file, 'r') as error_rates :
@@ -1061,7 +1039,7 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
         for genome, lo_result in results.items():
             highest_sim_matches = closest_matches(genome, lo_result)
             closest_match = highest_sim_matches[0]
-            lo_result_to_display = highest_sim_matches[1]
+            fingerprint = highest_sim_matches[1]
             other_closest_matches = na_empty_lists([tup[0] for tup in closest_match[2:]])
             same_sim_2_case = na_empty_lists([tup[0] for tup in closest_matches(genome, lo_result)[2]])
 
@@ -1071,26 +1049,22 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
             print('dict mm', dict_mismatches.keys())
             print('error rate', error_rate_dict)
             contrasting_genes = na_empty_lists([(key, error_rate_dict[key]) for key in dict_mismatches.keys()])
-            #
-            # contrasting_genes = na_empty_lists([(k,v) for k,v in dict(zip([key for key in dict_mismatches.keys()],
-            #                                                               error_rate_dict.values())).items()])
-
-            # contrasting_genes = [key for key in dict_mismatches.keys()]
             genes_with_2 = na_empty_lists([GENE_LIST[ind] for ind, x in enumerate(lo_result) if x == 2])
 
             row = [genome] + \
-                  lo_result_to_display + \
+                  fingerprint + \
                   [cgftype_match, num_sim] + \
-                  contrasting_genes + \
-                  genes_with_2 + \
-                  same_sim_2_case + \
-                  other_closest_matches
+                  [contrasting_genes] + \
+                  [genes_with_2] + \
+                  [same_sim_2_case] + \
+                  [(other_closest_matches)]
             csv_writer.writerow(row)
 
 
 #TODO: changed db_dir to file_path when calling on each genome.
 #TODO: put CASE 4: exceptions into another function and call that separately
-def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, out_results, error_rates_file):
+def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, cj0181_f_primer, cj0181_r_primer,
+         out_results, error_rates_file):
     """
 
     :param db_directory: The location of the directory with fasta database files contained (already formatted using makeblastdb)
@@ -1135,7 +1109,7 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, out_results, err
     for file_path in files_paths:
         file_name = Path(file_path).stem
         print('file_name', file_name)
-        result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta)
+        result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta, cj0181_f_primer, cj0181_r_primer)
         cgf_predictions_dict[file_name] = result[0]
         exception_dict_result[file_name] = result[2]
         single_primer_results_dict[file_name] = result[3]
@@ -1147,34 +1121,37 @@ def main(db_fasta, f_primers_fasta, r_primers_fasta, amp_fasta, out_results, err
 
     # per_gene_fourth_case_check(all_ehyb_pos_dict, f_primers_fasta, r_primers_fasta, amp_fasta, file_gene_dict)
 
-    write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict, error_rates_file)
+    write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
+                         error_rates_file, out_results)
 
     print(cgf_predictions_dict)
     return cgf_predictions_dict
 
 
 # TODO: Commented out so I could use as package in github. (running main from __main__.py)
-# if __name__ == "__main__":
-#
-#     small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-#     # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
-#     # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
-#     # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
-#     puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
-#     all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
-#     debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
-#     # out_results = "/home/sfisher/eCGF/all_genomes/testing_results/third_trial.csv"
-#     out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results.csv"
-#     # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
-#
-#     #TODO: add lab binary results for reference??
-#     lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
-#     error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
-#     forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
-#     reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
-#     amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
-#
-#     main(puppy_genomes, forward_primers, reverse_primers, amplicon_sequences, out_results, error_rates_file)
+if __name__ == "__main__":
+
+    small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+    # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
+    # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
+    # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
+    puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
+    all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
+    debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
+    # out_results = "/home/sfisher/eCGF/all_genomes/testing_results/new_single_cell_Test.csv"
+    out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
+    # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
+
+    #TODO: add lab binary results for reference??
+    lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
+    error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
+    forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
+    reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
+    amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
+    f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
+    r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
+
+    main(all_genomes, forward_primers, reverse_primers, amplicon_sequences, f_primer_file, r_primer_file, out_results, error_rates_file)
 
 
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
