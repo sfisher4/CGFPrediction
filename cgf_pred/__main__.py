@@ -31,7 +31,8 @@ def main():
 
     args = arguments()
     CGFPrediction.main(args.genomes, args.out_file, paths['f_primers'], paths['r_primers'], paths['amp_seq'],
-                       paths['cj0181_f_primer'], paths['cj0181_r_primer'], db_paths['error_rate'])
+                       paths['cj0181_f_primer'], paths['cj0181_r_primer'],
+                       db_paths['error_rate'], db_paths['cgf_types_fprints'])
 
 if __name__ == '__main__':
     main()

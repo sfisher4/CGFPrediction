@@ -971,7 +971,7 @@ def chunk(iterable, length):
             yield unit
             unit = []
 
-def closest_matches(genome, lo_result):
+def closest_matches(genome, lo_result, db_fprints_file):
     if 2 in lo_result:
         make_binary.lo_solutions = []
         chained_lo_bin_results = list(chunk(flatten(make_binary(lo_result)), 40))
@@ -984,7 +984,7 @@ def closest_matches(genome, lo_result):
     #TODO: include fprints in fastas or ask user to input them?... maybe have option to include??
     for lo_bin_result in chained_lo_bin_results:
         match = find_closest_fingerprint(lo_bin_result,
-                                         "/home/sfisher/eCGF/all_genomes/cgf_types_fprints_26149.csv")
+                                         db_fprints_file)
         if closest_match == []:
             closest_match = match
             lo_result_to_display = lo_bin_result
@@ -1004,7 +1004,7 @@ def na_empty_lists(list):
         return list
 
 def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
-                         error_rates_file, out_results):
+                         error_rates_file, out_results, db_fprints_file):
 
     error_rate_dict = {}
     with open(error_rates_file, 'r') as error_rates :
@@ -1037,11 +1037,11 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
 
 
         for genome, lo_result in results.items():
-            highest_sim_matches = closest_matches(genome, lo_result)
+            highest_sim_matches = closest_matches(genome, lo_result, db_fprints_file)
             closest_match = highest_sim_matches[0]
             fingerprint = highest_sim_matches[1]
             other_closest_matches = na_empty_lists([tup[0] for tup in closest_match[2:]])
-            same_sim_2_case = na_empty_lists([tup[0] for tup in closest_matches(genome, lo_result)[2]])
+            same_sim_2_case = na_empty_lists([tup[0] for tup in highest_sim_matches[2]])
 
             cgftype_match = closest_match[0][0]
             dict_mismatches = closest_match[0][1]
@@ -1064,7 +1064,7 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
 #TODO: changed db_dir to file_path when calling on each genome.
 #TODO: put CASE 4: exceptions into another function and call that separately
 def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
-         cj0181_f_primer, cj0181_r_primer, error_rates_file):
+         cj0181_f_primer, cj0181_r_primer, error_rates_file, db_fprints_file):
     """
 
     :param db_directory: The location of the directory with fasta database files contained (already formatted using makeblastdb)
@@ -1122,36 +1122,38 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
     # per_gene_fourth_case_check(all_ehyb_pos_dict, f_primers_fasta, r_primers_fasta, amp_fasta, file_gene_dict)
 
     write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
-                         error_rates_file, out_results)
+                         error_rates_file, out_results, db_fprints_file)
 
     # print(cgf_predictions_dict)
     return cgf_predictions_dict
 
 
 # TODO: Commented out so I could use as package in github. (running main from __main__.py)
-# if __name__ == "__main__":
-#
-#     small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-#     # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
-#     # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
-#     # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
-#     puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
-#     all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
-#     debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
-#     # out_results = "/home/sfisher/eCGF/all_genomes/testing_results/new_single_cell_Test.csv"
-#     out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
-#     # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
-#
-#     #TODO: add lab binary results for reference??
-#     lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
-#     error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
-#     forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
-#     reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
-#     amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
-#     f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
-#     r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
-#
-#     main(all_genomes, out_results, forward_primers, reverse_primers, amplicon_sequences, f_primer_file, r_primer_file, error_rates_file)
+if __name__ == "__main__":
+
+    small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+    # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
+    # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
+    # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
+    puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
+    all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
+    debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
+    out_results = "/home/sfisher/eCGF/all_genomes/testing_results/testing!.csv"
+    db_fprints_file = "/home/sfisher/eCGF/all_genomes/cgf_types_fprints_26149.txt"
+    # out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
+    # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
+
+    #TODO: add lab binary results for reference??
+    lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
+    error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
+    forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
+    reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
+    amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
+    f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
+    r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
+
+    main(debug_genomes, out_results, forward_primers, reverse_primers, amplicon_sequences,
+         f_primer_file, r_primer_file, error_rates_file, db_fprints_file)
 
 
     # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
