@@ -9,9 +9,9 @@ from pathlib import Path
 def arguments():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('genomes',
-                        help="a path to a directory containing fasta files for all query genomes",
-                        type=str)
+    # parser.add_argument('genomes',
+    #                     help="a path to a directory containing fasta files for all query genomes",
+    #                     type=str)
 
     parser.add_argument('out_file',
                         help="a path to a csv file where eCGF results should be printed.",
