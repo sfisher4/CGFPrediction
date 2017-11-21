@@ -1,0 +1,5 @@
+include README.rst
+include *.fasta
+recursive-include fastas *.fasta
+include*.txt
+recursive-include csvs *.txt
