@@ -1,21 +1,25 @@
 eCGF
+
 In silico CGF subtyping of Campylobacter using whole-genome sequence data.
+
 Prediction accuracy of 1046 genomes: 99.682%
 
 Getting Started
+
 How to access and install the program:
 
 One time:
+
 1) Download and install Blast+:
     ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-win64.exe
 2) Download and install Python:
     NOTE: This also installs pip.
-    a) Go to: python.org/downloads
-    b) Click download link next to python 3.6.3 (SHAN: CHECK VERSION USED)
-    c) IMPORTANT: Click box: Add Python 3.6 to PATH
-    d) Click Install Now
-    e) Click yes
-    f) Click Disable Path Length limit (doesn’t really matter but doesn’t hurt).
+    1) Go to: python.org/downloads
+    2) Click download link next to python 3.6.3 (SHAN: CHECK VERSION USED)
+    3) IMPORTANT: Click box: Add Python 3.6 to PATH
+    4) Click Install Now
+    5) Click yes
+    6) Click Disable Path Length limit (doesn’t really matter but doesn’t hurt).
 
 3) Download eCGF Program
     a) Go to my Github account releases:
