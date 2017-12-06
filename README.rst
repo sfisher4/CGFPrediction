@@ -1,9 +1,7 @@
 eCGF
 ====
-In silico CGF subtyping of Campylobacter using whole-genome sequence data.
---------------------------------------------------------------------------
-Prediction accuracy of 1046 genomes: 99.682%
---------------------------------------------
+**In silico CGF subtyping of Campylobacter using whole-genome sequence data.**
+**Prediction accuracy of 1046 genomes: 99.682%**
 Getting Started
 ===============
 How to access and install the program:
@@ -45,7 +43,6 @@ Each time you want to run eCGF:
 1) Go to start menu, type powershell and open up windows powershell.
 
 2) Type: eCGF "./path/to/folder/containing/all/fasta/genomes" "./path/to/output.csv"
-
 *NOTE: Every fasta file in the input folder will be run through the program.*
 
 ** Still testing below to make sure works. Will test on Dec 6th or 7th at home **
