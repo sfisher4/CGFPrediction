@@ -1,7 +1,9 @@
 eCGF
 ====
 **In silico CGF subtyping of Campylobacter using whole-genome sequence data.**
+
 **Prediction accuracy of 1046 genomes: 99.682%**
+
 Getting Started
 ===============
 How to access and install the program:
