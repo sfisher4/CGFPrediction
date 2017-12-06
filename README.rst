@@ -13,7 +13,8 @@ One time:
 1) Download and install Blast+:
     ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-win64.exe
 2) Download and install Python:
-    NOTE: This also installs pip.
+    *NOTE: This also installs pip.*
+
     1) Go to: python.org/downloads
     2) Click download link next to python 3.6.3 (SHAN: CHECK VERSION USED)
     3) IMPORTANT: Click box: Add Python 3.6 to PATH
