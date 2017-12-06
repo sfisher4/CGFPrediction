@@ -29,10 +29,10 @@ One time:
 4) Download dependencies:
     a) Go to start menu, type powershell and open up windows powershell.
     b) Type in shell: pip install memory_profiler bioseq biopython
-            NOTE: If it says pip cannot be found, then you didn't add python to your PATH when installing it,
+            **NOTE: If it says pip cannot be found, then you didn't add python to your PATH when installing it,
             so reinstall and make sure you pressed the add to path button.
             If that doesn’t work: you can just replace all of your pip commands with
-            :C:\Users\<username>\AppData\Local\Programs\Python\Python36-32\Scripts\pip.exe
+            :C:\Users\<username>\AppData\Local\Programs\Python\Python36-32\Scripts\pip.exe**
     c) cd to wherever the CGFPrediction zip file from step 3 is located.
             i.e. Type in shell: cd ~\Downloads     (unless you moved the zip file location)
     d) Type in shell: pip install .\CGFPrediction-1.9.zip
@@ -58,7 +58,7 @@ To Add Fingerprints to the Database:
 
 Result:
 A csv file containing:
-    - genome names
+    - Genome names
     - eCGF binary fingerprints (2's not included, will take binary of closest match at 2's position)
     - Nearest Match	(compared to database located in file cgf_types_fprints)
     - Number of Similarities (/40)
