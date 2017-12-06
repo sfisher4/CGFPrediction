@@ -1,15 +1,15 @@
 eCGF
-
+====
 In silico CGF subtyping of Campylobacter using whole-genome sequence data.
-
+--------------------------------------------------------------------------
 Prediction accuracy of 1046 genomes: 99.682%
-
+--------------------------------------------
 Getting Started
-
+===============
 How to access and install the program:
-
+--------------------------------------
 One time:
-
+---------
 1) Download and install Blast+:
     ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.4.0/ncbi-blast-2.4.0+-win64.exe
 2) Download and install Python:
@@ -41,7 +41,9 @@ One time:
         If this test doesn't work --> Read error to see if it gives any clues on where it failed and/or review steps.
 
 Each time you want to run eCGF:
+-------------------------------
 1) Go to start menu, type powershell and open up windows powershell.
+
 2) Type: eCGF "./path/to/folder/containing/all/fasta/genomes" "./path/to/output.csv"
 NOTE: Every fasta file in the input folder will be run through the program.
 
