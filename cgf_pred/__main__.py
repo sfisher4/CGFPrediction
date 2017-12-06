@@ -1,9 +1,6 @@
-import sys
 import argparse
 from cgf_pred import CGFPrediction
 import pkg_resources
-from glob import glob
-import subprocess
 from pathlib import Path
 
 def arguments():

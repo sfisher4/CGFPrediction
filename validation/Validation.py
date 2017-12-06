@@ -1,6 +1,8 @@
 
 import pandas as pd
 
+# NOTE: This validation is for reference only.
+
 def new_validation(lab_binary_results, ecgf_binary_results, validation_file, val_total_file, lab_result_delimiter):
     gene_list = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
                  'cj0307', 'cj0421c', 'cj0483', 'cj0486', 'cj0566', 'cj0569', 'cj0570', 'cj0625', 'cj0728',
@@ -15,17 +17,13 @@ def new_validation(lab_binary_results, ecgf_binary_results, validation_file, val
         for line in lines:
             genes_expected = []
             for word in line.split(lab_result_delimiter):
-                # print('word', word)
                 if word == '1' or word == '1\n':
                     genes_expected.append(1)
                 elif word == '0' or word == '0\n':
                     genes_expected.append(0)
-                else:
-                    print('!!!', word)
             genome_name = line.split(',', 1)[0]
             genome_name = genome_name.replace('.fasta', "")
             file_gene_exp_dict[genome_name] = genes_expected
-        print('genes expected', file_gene_exp_dict)
 
     with open(ecgf_binary_results, "r") as ecgf_file:
         next(ecgf_file)
@@ -96,9 +94,9 @@ def new_validation(lab_binary_results, ecgf_binary_results, validation_file, val
             'Total "2"s when lab data DOES NOT find the gene' : total_uncertain_f_pos,
             'Total "2"s when lab data DOES find the gene': total_uncertain_f_neg
         })
-        df.to_csv(total_validation_results, mode='a', sep=" ", )
+        df.to_csv(val_total_file, mode='a', sep=" ", )
 
-#     # TODO: remove from program or make seperate case for debugging in the future!
+#
 
 
 
@@ -217,34 +215,34 @@ def new_validation(lab_binary_results, ecgf_binary_results, validation_file, val
 #                           os.path.basename(database), file_gene_dict)
 
 
-if __name__ == "__main__":
-
-    forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
-    reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
-    amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
-    # db_directory = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
-    db_directory = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-    # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
-
-    # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
-    # ecgf_binary_results = "/home/sfisher/eCGF/Results_246_gnomes/without_exceptions/oct_20_results.txt"
-    lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
-    ecgf_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_all_genomes"
-    table_file = "/home/sfisher/Sequences/11168_test_files/tables/testing.txt"
-    total_validation_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_false_sums"
-    lab_result_delimiter = ','
-    validation_file = "/home/sfisher/eCGF/all_genomes/Results/nov_1_validation_results.txt"
-
-    ehyb_only = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
-                 'cj0307',
-                 'cj0421c', 'cj0483', 'cj0486', 'cj0566', 'cj0569', 'cj0570', 'cj0625', 'cj0728', 'cj0733',
-                 'cj0736',
-                 'cj0755', 'cj0860', 'cj0967', 'cj1134', 'cj1136', 'cj1141', 'cj1294', 'cj1324', 'cj1329',
-                 'cj1334',
-                 'cj1427c', 'cj1431c', 'cj1439', 'cj1550c', 'cj1551', 'cj1552', 'cj1585', 'cj1679', 'cj1721',
-                 'cj1727c']
-
-    # create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only)
-    # ecgf_validation()
-    new_validation(lab_binary_results, ecgf_binary_results, validation_file, total_validation_results, lab_result_delimiter)
+# if __name__ == "__main__":
+#
+#     forward_primers = "/home/sfisher/Sequences/cgf_forward_primers.fasta"
+#     reverse_primers = "/home/sfisher/Sequences/cgf_reverse_primers.fasta"
+#     amplicon_sequences = "/home/sfisher/Sequences/amplicon_sequences/amplicon_sequences.fasta"
+#     # db_directory = "/home/sfisher/Sequences/11168_test_files/gnomes_for_shannah"
+#     db_directory = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
+#     # db_directory = "/home/sfisher/Sequences/11168_test_files/debug_genes"
+#
+#     # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
+#     # ecgf_binary_results = "/home/sfisher/eCGF/Results_246_gnomes/without_exceptions/oct_20_results.txt"
+#     lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
+#     ecgf_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_all_genomes"
+#     table_file = "/home/sfisher/Sequences/11168_test_files/tables/testing.txt"
+#     total_validation_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_false_sums"
+#     lab_result_delimiter = ','
+#     validation_file = "/home/sfisher/eCGF/all_genomes/Results/nov_1_validation_results.txt"
+#
+#     ehyb_only = ['cj0008', 'cj0033', 'cj0035', 'cj0057', 'cj0177', 'cj0181', 'cj0264c', 'cj0297c', 'cj0298c',
+#                  'cj0307',
+#                  'cj0421c', 'cj0483', 'cj0486', 'cj0566', 'cj0569', 'cj0570', 'cj0625', 'cj0728', 'cj0733',
+#                  'cj0736',
+#                  'cj0755', 'cj0860', 'cj0967', 'cj1134', 'cj1136', 'cj1141', 'cj1294', 'cj1324', 'cj1329',
+#                  'cj1334',
+#                  'cj1427c', 'cj1431c', 'cj1439', 'cj1550c', 'cj1551', 'cj1552', 'cj1585', 'cj1679', 'cj1721',
+#                  'cj1727c']
+#
+#     # create_binary_table(forward_primers, reverse_primers, amplicon_sequences, db_directory, table_file, lab_binary_results, ehyb_only)
+#     # ecgf_validation()
+#     new_validation(lab_binary_results, ecgf_binary_results, validation_file, total_validation_results, lab_result_delimiter)
 

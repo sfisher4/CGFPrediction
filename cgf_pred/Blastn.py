@@ -6,7 +6,6 @@ from Bio.Blast import NCBIXML
 from cgf_pred.HSP import HSP
 
 
-#TODO: use Record.py instead?
 class Blastn(object):
     """ A blastn query Object from comparing two nucleotide sequences.
 
@@ -18,8 +17,6 @@ class Blastn(object):
 
     def __init__(self):
         self.blast_records = []
-        #changed!!!
-        # self.hsp_records = {}
         self.hsp_objects = []
 
     def create_blast_records(self, stdout_xml):
@@ -61,15 +58,11 @@ class Blastn(object):
                     hsp_object.length = abs(hsp_object.end - hsp_object.start) + 1
                     hsp_object.query_length = abs(hsp.query_end - hsp.query_start) + 1
                     hsp_object.db_length = alignment.length
-                    # hsp_object.expect = hsp.expect
                     hsp_object.sbjct = hsp.sbjct
                     hsp_object.query = hsp.query
                     hsp_object.identities = hsp.identities
-                    # hsp_object.gaps = hsp.gaps
                     hsp_object.bits = hsp.bits
 
-
-                    # assuming no contigs (complete genome)
                     if hsp.sbjct_start < hsp.sbjct_end:
                         hsp_object.strand = True
                     elif hsp.sbjct_start > hsp.sbjct_end:

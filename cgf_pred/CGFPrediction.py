@@ -19,7 +19,7 @@ import csv
 
 #BLASTN LIMITATIONS
 #db vs primer
-MIN_BSR = 0.60         # for primers #TODO!!!
+MIN_BSR = 0.60         # for primers
 #db vs amp:
 E_VALUE_CUTOFF = 0.01   # for ehyb
 #other
@@ -60,7 +60,7 @@ def blastn_query1(query_genes, db, qcov=False, evalue=False, id=PERC_ID_CUTOFF):
     :return: stdout xml format
     """
 
-    #TODO: ONLY RUN MAKEBLASTDB IF THE DB IS NOT ALREADY FORMATTED!!!
+    #TODO: ONLY RUN MAKEBLASTDB IF THE DB IS NOT ALREADY FORMATTED!
     blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
     DB_process = subprocess.run(blastdb_cmd,
                                   shell=True,
@@ -117,7 +117,7 @@ def create_blastn_object(query_genes:str, db:str, qcov=False,id=PERC_ID_CUTOFF):
     :return: Blastn object
     """
     blastn_object = Blastn()
-    stdout_xml = blastn_query1(query_genes, db, qcov=qcov, id=id) #TODO: CHANGED FROM blastn_query
+    stdout_xml = blastn_query1(query_genes, db, qcov=qcov, id=id)
     blastn_object.create_blast_records(stdout_xml)
     blastn_object.create_hsp_objects(query_genes)
     return blastn_object.hsp_objects
@@ -130,7 +130,7 @@ def create_blastn_bsr_object(query_genes, db):
     :return: A blast object with initialized blast_records and hsp_records with cutoff bsr
     """
     blastn_object = Blastn()
-    stdout_xml = blastn_query1(query_genes, db, qcov=True) #TODO: CHANGED FROM bs_blast
+    stdout_xml = blastn_query1(query_genes, db, qcov=True)
     blastn_object.create_blast_records(stdout_xml)
     blastn_object.create_hsp_objects(query_genes)
     return blastn_object
@@ -238,8 +238,6 @@ def hamming_dist(seq1, seq2):
     """ Calculate the hamming distance between two sequences
     return: distance between the two sequences
     """
-    #TODO: check out this case!!!
-    # assert len(seq1) == len(seq2)
 
     dist = sum(x != y for x, y in zip(seq1, seq2))
     return(dist)
@@ -346,7 +344,6 @@ def valid_dir(hsp: HSP):
     dist_end = abs((hsp.db_length + 1) - hsp.start - hsp.amp_len)
     dist_start = abs(hsp.start - hsp.amp_len)
 
-    #TODO: could there be a case where the sequence is found over the entire amp!?
     if dist_end <= (MAX_PERC_END * hsp.amp_len):
         hsp.location = True
         hsp.end_dist = dist_end
@@ -554,7 +551,6 @@ def diff_contig_pred(lo_tup_diff_contig, max_f_bits_dict, max_r_bits_dict, ehybr
         copied_o = contig_copy(f_hsp_old, r_hsp_old, max_f_bits_dict, max_r_bits_dict, False)
         f_hsp, r_hsp = copied_o[0], copied_o[1]
 
-        #TODO: make helper functions
         for hsp in ehybrid_hsp_pass:
             if f_hsp.start == hsp.start or f_hsp.end == hsp.end \
                     and f_hsp.contig_name == hsp.contig_name:
@@ -621,8 +617,6 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass):
 
     return result_dict
 
-#TODO: make exceptions into helper functions
-# @profile
 def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, cj0181_f_primer, cj0181_r_primer) -> list:
     """ Predicts in vitro cgf (eCGF)
 
@@ -668,7 +662,6 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
     ehybrid_pass = [hsp for hsp in lo_hsp_ehybrid if hsp.ehybrid == True]
     ehyb_pos = [hsp for hsp in ehybrid_pass if hsp.name not in result_dict.keys()
                 if hsp.name not in single_primer_results_dict.keys()]
-    # TODO: below is so I could see if I could find F+ causes for Steven's analysis
     # ehyb_pos = [hsp for hsp in ehybrid_pass]
     ehyb_names = [hsp.name for hsp in ehyb_pos]
 
@@ -693,14 +686,13 @@ def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:s
             exception_result_dict = four_branch_prediction(f_blast_exc, r_blast_exc, ehyb_pos, dict_f_primers, dict_r_primers, max_f_bits_dict,
                                        max_r_bits_dict, amp_sequences, database, ehyb_pos)[0]
 
-    #TODO: delete print statements
+    #TODO: remove print statements
     print('genome: ', database)
     print('found using ecgf: ', result_dict.keys())
     print('found using ehyb: ', ehyb_names)
     print('found using exception: ', exception_result_dict.keys())
     print(os.path.basename(database))
     print('len genes found including exceptions', len(result_dict) + len(exception_result_dict))
-
 
     return [results_list[0], ehyb_pos, exception_result_dict, single_primer_results_dict]
 
@@ -717,7 +709,6 @@ def assign_bsr(f_hsp_single_primers, r_hsp_single_primers, max_f_bits_dict, max_
             lo_hsp_single_primers.append(r_hsp)
     return lo_hsp_single_primers
 
-#TODO: split into helper functions!!!
 def four_branch_prediction(forward_blast, reverse_blast, full_blast_qcov_hsps, dict_f_primers, dict_r_primers, max_f_bits_dict,
                            max_r_bits_dict, amp_sequences, database, blast_object_hsps):
 
@@ -843,7 +834,7 @@ def closest_matches(genome, lo_result, db_fprints_file):
     closest_match = []
     same_sim_2_case = []
     lo_result_to_display = []
-    #TODO: include fprints in fastas or ask user to input them?... maybe have option to include??
+
     for lo_bin_result in chained_lo_bin_results:
         match = find_closest_fingerprint(lo_bin_result,
                                          db_fprints_file)
@@ -926,8 +917,6 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
             csv_writer.writerow(row)
 
 
-#TODO: changed db_dir to file_path when calling on each genome.
-#TODO: put CASE 4: exceptions into another function and call that separately
 def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
          cj0181_f_primer, cj0181_r_primer, error_rates_file, db_fprints_file):
     """
@@ -963,17 +952,17 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
     return cgf_predictions_dict
 
 
-# TODO: Commented out so I could use as package in github. (running main from __main__.py)
+# # TODO: Commented out so I could use as package in github. (running main from __main__.py)
 # if __name__ == "__main__":
 #
 #     small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
 #     # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
 #     # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
 #     # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
-#     puppy_genomes = "/home/sfisher/eCGF/puppy_genomes/assemblies"
+#     puppy_genomes2 = "/home/sfisher/eCGF/puppy_genomes/assemblies_2"
 #     all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
 #     debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
-#     out_results = "/home/sfisher/eCGF/all_genomes/testing_results/testing!.csv"
+#     out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results_SRR6048556.csv"
 #     db_fprints_file = "/home/sfisher/eCGF/all_genomes/cgf_types_fprints_26149.txt"
 #     # out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
 #     # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
@@ -987,7 +976,7 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
 #     f_primer_file = "/home/sfisher/Sequences/BSR/f_primers/cj0181.fasta"
 #     r_primer_file = "/home/sfisher/Sequences/BSR/r_primers/cj0181.fasta"
 #
-#     main(debug_genomes, out_results, forward_primers, reverse_primers, amplicon_sequences,
+#     main(puppy_genomes2, out_results, forward_primers, reverse_primers, amplicon_sequences,
 #          f_primer_file, r_primer_file, error_rates_file, db_fprints_file)
 
 
