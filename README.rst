@@ -45,7 +45,7 @@ Each time you want to run eCGF:
 1) Go to start menu, type powershell and open up windows powershell.
 
 2) Type: eCGF "./path/to/folder/containing/all/fasta/genomes" "./path/to/output.csv"
-*NOTE: Every fasta file in the input folder will be run through the program.*
+    *NOTE: Every fasta file in the input folder will be run through the program.*
 
 ** Still testing below to make sure works. Will test on Dec 6th or 7th at home **
 To Add Fingerprints to the Database:
