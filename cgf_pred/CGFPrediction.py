@@ -1,5 +1,3 @@
-import cProfile
-from memory_profiler import profile
 import copy
 import os
 import subprocess
@@ -100,6 +98,7 @@ def blastn_query_exceptions(query_gene, db, qcov):
     return stdout
 
 def create_blastn_object_exceptions(query_gene:str, db:str, qcov):
+  """ Return a blastn object with initalized blast_records and hsp_records """
     blastn_object = Blastn()
     stdout_xml = blastn_query_exceptions(query_gene, db, qcov)
     blastn_object.create_blast_records(stdout_xml)
@@ -168,7 +167,7 @@ def create_dict_from_fasta_seqs(primers):
     return primer_dict
 
 def is_distance(f_hsp_object, r_hsp_object, amplicon_sequences):
-    """ Modifies objects attributes to True if f & r are within MAX_MARGIN_BTWN_PRIMERS to each other.
+    """ Modifies objects attributes to True if forward & reverse objects are within MAX_MARGIN_BTWN_PRIMERS to each other.
 
     :param f_hsp_object: A HSP object
     :param r_hsp_object: A HSP object
@@ -185,6 +184,9 @@ def is_distance(f_hsp_object, r_hsp_object, amplicon_sequences):
             r_hsp_object.pcr_distance = (abs(amplicon_length - distance) <= MAX_MARGIN_BTWN_PRIMERS)
 
 def extend_sbjct(hsp_object, database, primer_dict):
+  """ Extends any missing bp's in the hsp_object that was removed by blastn by comparing to the 
+      respective sbjct's sequence.
+  """
     start = hsp_object.start
     end = hsp_object.end
     query_start = hsp_object.query_start
@@ -368,25 +370,6 @@ def ehyb(blast_object, cutoff_gene_len=CUTOFF_GENE_LENGTH):
         hsp.ehybrid = False
     lo_ehybrid_results = lo_ehybrid_hsp + lo_failures
     return lo_ehybrid_results
-
-def false_neg_pred(attr_bin_tree:list, hsp:HSP, i:int) -> int:
-    """
-
-    :param attr_bin_tree:
-    :param hsp:
-    :param i:
-    :return:
-    """
-    attr_i = attr_bin_tree[i]
-    if attr_i == None:
-        assert i != None
-        return i
-    elif getattr(hsp, attr_i) == None:
-        return i
-    elif getattr(hsp, attr_i):
-        return false_neg_pred(attr_bin_tree, hsp, (2 * i) + 1)
-    elif not getattr(hsp, attr_i):
-        return false_neg_pred(attr_bin_tree, hsp, (2 * i) + 2)
 
 def max_bits(seqn_dir:str) -> dict:
     max_bits_dict = {}
@@ -952,24 +935,12 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
     return cgf_predictions_dict
 
 
-# # TODO: Commented out so I could use as package in github. (running main from __main__.py)
+# # TODO: Commented out for packaging. (running main from __main__.py)
 # if __name__ == "__main__":
 #
-#     small_testset = "/home/sfisher/Sequences/11168_test_files/246_gnomes_2nd_tests"
-#     # debug_cases = "/home/sfisher/Sequences/11168_test_files/debug_genes/other"
-#     # stevens_genomes = "/home/sfisher/eCGF/genomes_for_Steven"
-#     # lab_binary_results = "/home/sfisher/Sequences/11168_test_files/cgf40_v2.txt"
 #     puppy_genomes2 = "/home/sfisher/eCGF/puppy_genomes/assemblies_2"
-#     all_genomes = "/home/sfisher/eCGF/all_genomes/genomes_with_lab_data"
-#     debug_genomes = "/home/sfisher/eCGF/all_genomes/debug_smaller"
 #     out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results_SRR6048556.csv"
-#     db_fprints_file = "/home/sfisher/eCGF/all_genomes/cgf_types_fprints_26149.txt"
-#     # out_results = "/home/sfisher/eCGF/all_genomes/Results/final_results_new.csv"
-#     # out_results = "/home/sfisher/eCGF/puppy_genomes/eCGF_results.csv"
 #
-#     #TODO: add lab binary results for reference??
-#     lab_binary_results = "/home/sfisher/eCGF/all_genomes/Results/nov_1_labcgf_1046genomes.txt"
-#     error_rates_file = "/home/sfisher/eCGF/all_genomes/error_rates.txt"
 #     forward_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_forward_primers.fasta"
 #     reverse_primers = "/home/sfisher/eCGF/primer_amp_fastas/cgf_reverse_primers.fasta"
 #     amplicon_sequences = "/home/sfisher/eCGF/primer_amp_fastas/amplicon_sequences.fasta"
@@ -979,7 +950,4 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
 #     main(puppy_genomes2, out_results, forward_primers, reverse_primers, amplicon_sequences,
 #          f_primer_file, r_primer_file, error_rates_file, db_fprints_file)
 
-
-    # cProfile.run('cgf_prediction_trial(forward_primers, reverse_primers, test_cprofile_file, amplicon_sequences, max_f_bits_dict, max_r_bits_dict, max_amp_bits_dict)')
-    # cProfile.run('main(all_genomes, forward_primers, reverse_primers, amplicon_sequences); print')
     # main(test_11168_cases, forward_primers, reverse_primers, amplicon_sequences)
