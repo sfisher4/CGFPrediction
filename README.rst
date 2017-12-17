@@ -36,7 +36,7 @@ One time:
             :C:\Users\<username>\AppData\Local\Programs\Python\Python36-32\Scripts\pip.exe*
     c) cd to wherever the CGFPrediction zip file from step 3 is located.
             i.e. Type in shell: cd ~\Downloads     (unless you moved the zip file location)
-    d) Type in shell: pip install .\CGFPrediction-1.9.zip
+    d) Type in shell: pip install ./CGFPrediction-1.9.zip
     e) TEST: Type in shell: eCGF --help
         If this test works --> You have successfully downloaded and installed python and eCGF.
         If this test doesn't work --> Read error to see if it gives any clues on where it failed and/or review steps.
@@ -67,6 +67,3 @@ A csv file containing:
     - Genes with 2:
     - Other cgf.type with same # of matches from 2 Case:
     - Other cgf.type with same # of matches:
-
-
-**NOTES:
