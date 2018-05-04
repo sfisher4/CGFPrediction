@@ -6,6 +6,11 @@ from pathlib import Path
 def arguments():
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--cores',
+                        type=int,
+                        default=1,
+                        help='Number of CPU cores to use [1]')
+
     parser.add_argument('genomes',
                         help="a path to a directory containing fasta files for all query genomes",
                         type=str)
@@ -29,7 +34,8 @@ def main():
     args = arguments()
     CGFPrediction.main(args.genomes, args.out_file, paths['f_primers'], paths['r_primers'], paths['amp_seq'],
                        paths['cj0181_f_primer'], paths['cj0181_r_primer'],
-                       db_paths['error_rate'], db_paths['cgf_types_fprints'])
+                       db_paths['error_rate'], db_paths['cgf_types_fprints'],
+                       args.cores)
 
 if __name__ == '__main__':
     main()
