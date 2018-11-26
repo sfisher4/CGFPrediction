@@ -921,29 +921,20 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
     exception_dict_result = {}
     single_primer_results_dict = {}
 
-    files = (file for file in os.listdir(db_fasta) if file.endswith('.fasta'))
 
-    files_paths = [os.path.join(os.path.abspath(db_fasta), f)
-                   for f in files]
-    file_names = [Path(file_path).stem for file_path in files_paths]
+    # file_names = [Path(file_path).stem for file_path in files_paths]
 
 
-    with ProcessPoolExecutor(max_workers=cores) as ppe:
+    result = ecgf(db_fasta,
+                  forward_primers=f_primers_fasta,
+                  reverse_primers=r_primers_fasta,
+                  amp_sequences=amp_fasta,
+                  cj0181_f_primer=cj0181_f_primer,
+                  cj0181_r_primer=cj0181_r_primer)
 
-        ecgf_ = partial(ecgf,
-                        forward_primers=f_primers_fasta,
-                        reverse_primers=r_primers_fasta,
-                        amp_sequences=amp_fasta,
-                        cj0181_f_primer=cj0181_f_primer,
-                        cj0181_r_primer=cj0181_r_primer)
-
-        results = ppe.map(ecgf_, files_paths)
-
-        for file_name, result in zip(file_names, results):
-
-            cgf_predictions_dict[file_name] = result[0]
-            exception_dict_result[file_name] = result[2]
-            single_primer_results_dict[file_name] = result[3]
+    cgf_predictions_dict[db_fasta] = result[0]
+    exception_dict_result[db_fasta] = result[2]
+    single_primer_results_dict[db_fasta] = result[3]
 
 
     write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
