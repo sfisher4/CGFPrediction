@@ -8,6 +8,7 @@ setup(
     package_data={
         'cgf_pred': ['fastas/*.fasta', 'csvs/*.txt']
     },
+    python_requires='>=3.6.0',
     entry_points={
         'console_scripts': [
             'eCGF = cgf_pred.__main__:main'
