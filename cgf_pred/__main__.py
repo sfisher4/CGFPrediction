@@ -7,7 +7,7 @@ def arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('genome',
-                        help="a path to a directory containing fasta files for all query genomes",
+                        help="Path to a FASTA-formatted genome",
                         type=str)
 
     parser.add_argument('out_file',
