@@ -1,10 +1,9 @@
 import copy
 import os
-import subprocess
 import gc
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
-from functools import partial
+from math import log
+import csv
 
 from Bio import SeqIO
 from Bio.Alphabet import generic_dna
@@ -13,9 +12,6 @@ from Bio.Seq import Seq
 
 from cgf_pred.Blastn import Blastn
 from cgf_pred.HSP import HSP
-from pathlib import Path
-from math import log
-import csv
 
 #BLASTN LIMITATIONS
 #db vs primer
@@ -813,7 +809,7 @@ def chunk(iterable, length):
             yield unit
             unit = []
 
-def closest_matches(genome, lo_result, db_fprints_file):
+def closest_matches(lo_result, db_fprints_file):
     if 2 in lo_result:
         make_binary.lo_solutions = []
         chained_lo_bin_results = list(chunk(flatten(make_binary(lo_result)), 40))
@@ -879,7 +875,7 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
 
 
         for genome, lo_result in results.items():
-            highest_sim_matches = closest_matches(genome, lo_result, db_fprints_file)
+            highest_sim_matches = closest_matches(lo_result, db_fprints_file)
             closest_match = highest_sim_matches[0]
             fingerprint = highest_sim_matches[1]
             other_closest_matches = na_empty_lists([tup[0] for tup in closest_match[2:]])
@@ -907,8 +903,7 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
 
 
 def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
-         cj0181_f_primer, cj0181_r_primer, error_rates_file, db_fprints_file,
-         cores):
+         cj0181_f_primer, cj0181_r_primer, error_rates_file, db_fprints_file):
     """
 
     :param db_directory: The location of the directory with fasta database files contained (already formatted using makeblastdb)
