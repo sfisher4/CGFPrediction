@@ -1,8 +1,9 @@
 import copy
 import os
-import subprocess
 import gc
 from collections import defaultdict
+from math import log
+import csv
 
 from Bio import SeqIO
 from Bio.Alphabet import generic_dna
@@ -11,9 +12,6 @@ from Bio.Seq import Seq
 
 from cgf_pred.Blastn import Blastn
 from cgf_pred.HSP import HSP
-from pathlib import Path
-from math import log
-import csv
 
 #BLASTN LIMITATIONS
 #db vs primer
@@ -59,46 +57,50 @@ def blastn_query1(query_genes, db, qcov=False, evalue=False, id=PERC_ID_CUTOFF):
     """
 
     #TODO: ONLY RUN MAKEBLASTDB IF THE DB IS NOT ALREADY FORMATTED!
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.run(blastdb_cmd,
-                                  shell=True,
-                                  stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                check=True)
+    #blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+    #DB_process = subprocess.run(blastdb_cmd,
+    #                              shell=True,
+    #                              stdin=subprocess.PIPE,
+    #                              stdout=subprocess.PIPE,
+    #                              stderr=subprocess.PIPE,
+    #                            check=True)
     # DB_process.wait()
 
     if qcov and evalue:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+        blastn_cline = NcbiblastnCommandline(query=query_genes, subject=db, word_size=WORD_SIZE, outfmt=5,
                                              perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC, evalue=E_VALUE_CUTOFF)
     elif qcov:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+        blastn_cline = NcbiblastnCommandline(query=query_genes, subject=db, word_size=WORD_SIZE, outfmt=5,
                                              perc_identity=id, qcov_hsp_perc=QCOV_HSP_PERC)
     elif evalue:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+        blastn_cline = NcbiblastnCommandline(query=query_genes, subject=db, word_size=WORD_SIZE, outfmt=5,
                                              perc_identity=id, evalue=E_VALUE_CUTOFF)
     else:
-        blastn_cline = NcbiblastnCommandline(query=query_genes, db=db, word_size=WORD_SIZE, outfmt=5,
+        blastn_cline = NcbiblastnCommandline(query=query_genes, subject=db, word_size=WORD_SIZE, outfmt=5,
                                              perc_identity=id)
     stdout, stderr = blastn_cline()
     return stdout
 
 def blastn_query_exceptions(query_gene, db, qcov):
-    blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
-    DB_process = subprocess.run(blastdb_cmd,
-                                  shell=True,
-                                  stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE,
-                                check=True)
+    # blastdb_cmd = 'makeblastdb -in {0} -dbtype nucl -title temp_blastdb'.format(db)
+    # DB_process = subprocess.run(blastdb_cmd,
+    #                               shell=True,
+    #                               stdin=subprocess.PIPE,
+    #                               stdout=subprocess.PIPE,
+    #                               stderr=subprocess.PIPE,
+    #                             check=True)
 
-    blastn_cline = NcbiblastnCommandline(query = query_gene, db = db, word_size = WORD_SIZE, outfmt = 5,
-                                         perc_identity = PERC_ID_CUTOFF, qcov_hsp_perc = qcov)
+    blastn_cline = NcbiblastnCommandline(query = query_gene,
+                                         subject = db,
+                                         word_size = WORD_SIZE,
+                                         outfmt = 5,
+                                         perc_identity = PERC_ID_CUTOFF,
+                                         qcov_hsp_perc = qcov)
     stdout, stderr = blastn_cline()
     return stdout
 
 def create_blastn_object_exceptions(query_gene:str, db:str, qcov):
-  """ Return a blastn object with initalized blast_records and hsp_records """
+    """ Return a blastn object with initalized blast_records and hsp_records """
     blastn_object = Blastn()
     stdout_xml = blastn_query_exceptions(query_gene, db, qcov)
     blastn_object.create_blast_records(stdout_xml)
@@ -184,9 +186,9 @@ def is_distance(f_hsp_object, r_hsp_object, amplicon_sequences):
             r_hsp_object.pcr_distance = (abs(amplicon_length - distance) <= MAX_MARGIN_BTWN_PRIMERS)
 
 def extend_sbjct(hsp_object, database, primer_dict):
-  """ Extends any missing bp's in the hsp_object that was removed by blastn by comparing to the 
-      respective sbjct's sequence.
-  """
+    """ Extends any missing bp's in the hsp_object that was removed by blastn by
+        comparing to the respective sbjct's sequence.
+    """
     start = hsp_object.start
     end = hsp_object.end
     query_start = hsp_object.query_start
@@ -600,7 +602,7 @@ def single_primer_found(lo_hsp_single_primers, ehybrid_hsp_pass):
 
     return result_dict
 
-def ecgf(forward_primers:str, reverse_primers:str, database:str, amp_sequences:str, cj0181_f_primer, cj0181_r_primer) -> list:
+def ecgf(database:str, forward_primers:str, reverse_primers:str, amp_sequences:str, cj0181_f_primer, cj0181_r_primer) -> list:
     """ Predicts in vitro cgf (eCGF)
 
     :param forward_primers: A string containing the path to all the 40 primer sequences in a fasta file
@@ -807,7 +809,7 @@ def chunk(iterable, length):
             yield unit
             unit = []
 
-def closest_matches(genome, lo_result, db_fprints_file):
+def closest_matches(lo_result, db_fprints_file):
     if 2 in lo_result:
         make_binary.lo_solutions = []
         chained_lo_bin_results = list(chunk(flatten(make_binary(lo_result)), 40))
@@ -873,7 +875,7 @@ def write_result_to_file(cgf_predictions_dict, exception_dict_result, single_pri
 
 
         for genome, lo_result in results.items():
-            highest_sim_matches = closest_matches(genome, lo_result, db_fprints_file)
+            highest_sim_matches = closest_matches(lo_result, db_fprints_file)
             closest_match = highest_sim_matches[0]
             fingerprint = highest_sim_matches[1]
             other_closest_matches = na_empty_lists([tup[0] for tup in closest_match[2:]])
@@ -910,24 +912,25 @@ def main(db_fasta, out_results, f_primers_fasta, r_primers_fasta, amp_fasta,
     :param amplicon_sequences: The fasta file location of the amplicon sequences
     :return: A dictionary
     """
-
-    files = (file for file in os.listdir(db_fasta) if file.endswith('.fasta'))
-    files_paths = []
-    for file in files:
-        files_paths.append(os.path.abspath(db_fasta) + '/' + file)
     cgf_predictions_dict = {}
     exception_dict_result = {}
     single_primer_results_dict = {}
 
-    for file_path in files_paths:
-        file_name = Path(file_path).stem
-        print('file_name', file_name)
-        result = ecgf(f_primers_fasta, r_primers_fasta, file_path, amp_fasta, cj0181_f_primer, cj0181_r_primer)
-        cgf_predictions_dict[file_name] = result[0]
-        exception_dict_result[file_name] = result[2]
-        single_primer_results_dict[file_name] = result[3]
 
-        gc.collect()
+    # file_names = [Path(file_path).stem for file_path in files_paths]
+
+
+    result = ecgf(db_fasta,
+                  forward_primers=f_primers_fasta,
+                  reverse_primers=r_primers_fasta,
+                  amp_sequences=amp_fasta,
+                  cj0181_f_primer=cj0181_f_primer,
+                  cj0181_r_primer=cj0181_r_primer)
+
+    cgf_predictions_dict[db_fasta] = result[0]
+    exception_dict_result[db_fasta] = result[2]
+    single_primer_results_dict[db_fasta] = result[3]
+
 
     write_result_to_file(cgf_predictions_dict, exception_dict_result, single_primer_results_dict,
                          error_rates_file, out_results, db_fprints_file)
